@@ -1,7 +1,6 @@
-import sys
 import argparse
 import pathlib
-from purl_publish import publish_to_purl
+from tdta.purl_publish import publish_to_purl
 
 
 def main():
