@@ -15,7 +15,7 @@ def main():
     args = parser.parse_args()
 
     if args.action == "purl-publish":
-        publish_to_purl()
+        publish_to_purl(str(args.input))
 
 
 if __name__ == "__main__":
