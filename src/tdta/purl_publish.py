@@ -19,11 +19,11 @@ def publish_to_purl(file_path: str) -> str:
     :return: url of the created pull request or the url of the existing PURL configuration.
     """
     print("In PURL action 3.")
-    work_dir = os.path.dirname(os.path.realpath(__file__))
+    work_dir = os.path.abspath(file_path)
     print(os.path.abspath(work_dir))
-    print(os.path.abspath(file_path))
 
     purl_folder = os.path.join(work_dir, "purl")
+    print(purl_folder)
     files = [f for f in os.listdir(os.path.abspath(purl_folder)) if os.path.isfile(f) and str(f).endswith(".yml")]
     purl_config_name = None
     if len(files) == 0:
