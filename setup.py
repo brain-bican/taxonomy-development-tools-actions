@@ -8,7 +8,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="tdta",
-    version="0.0.3.dev1",
+    version="0.0.4.dev1",
     description="The aim of this project is to provide taxonomy development tools custom actions.",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -23,7 +23,7 @@ setup(
     package_dir={'': 'src'},
     packages=["tdta"],
     include_package_data=True,
-    install_requires=[],
+    install_requires=['requests'],
     entry_points={
         "console_scripts": [
             "tdta=tdta.__main__:main",
