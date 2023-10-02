@@ -18,7 +18,7 @@ def publish_to_purl(file_path: str) -> str:
     :param file_path: path to the project root folder
     :return: url of the created pull request or the url of the existing PURL configuration.
     """
-    print("In PURL action 3.")
+    print("In PURL action 6.")
     work_dir = os.path.abspath(file_path)
     print(os.path.abspath(work_dir))
 
