@@ -21,14 +21,18 @@ def publish_to_purl(file_path: str) -> str:
     print("In PURL action 7.")
     work_dir = os.path.abspath(file_path)
     print(work_dir)
+    print('>>>>>')
     contents = os.listdir(work_dir)
     for item in contents:
         print(item)
+    print('<<<<<<')
     purl_folder = os.path.join(work_dir, "purl")
     print(purl_folder)
+    print('>>>>>')
     contents = os.listdir(purl_folder)
     for item in contents:
         print(item)
+    print('<<<<<<')
     files = [f for f in os.listdir(os.path.abspath(purl_folder)) if os.path.isfile(f) and str(f).endswith(".yml")]
     purl_config_name = None
     if len(files) == 0:
