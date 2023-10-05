@@ -8,7 +8,8 @@ from typing import Optional
 
 
 PURL_TAXONOMY_FOLDER_URL = 'https://github.com/brain-bican/purl.brain-bican.org/tree/main/config/taxonomy/'
-PURL_REPO = 'brain-bican/purl.brain-bican.org'
+PURL_REPO_NAME = 'purl.brain-bican.org'
+PURL_REPO = 'brain-bican/{}'.format(PURL_REPO_NAME)
 # PURL_TAXONOMY_FOLDER_URL = 'https://github.com/hkir-dev/purl.brain-bican.org/tree/main/config/taxonomy/'
 # PURL_REPO_LOCAL = 'hkir-dev/purl.brain-bican.org'
 
@@ -24,8 +25,9 @@ def publish_to_purl(file_path: str, taxonomy_name: str, user_name: str) -> str:
     :param user_name: authenticated GitHub username
     :return: url of the created pull request or the url of the existing PURL configuration.
     """
-    print("In PURL action 17.")
-    print(runcmd("git config --global user.name \"{}\"".format(user_name)))
+    print("In PURL action 18.")
+    # TODO delete
+    # print(runcmd("git config --global user.name \"{}\"".format(user_name)))
     if not os.environ.get('GH_TOKEN'):
         raise Exception("'GH_TOKEN' environment variable is not declared. Please follow https://brain-bican.github.io/taxonomy-development-tools/Build/ to setup.")
     else:
@@ -51,8 +53,6 @@ def publish_to_purl(file_path: str, taxonomy_name: str, user_name: str) -> str:
     if response.status_code == 200:
         print('PURL already exists: ' + (PURL_TAXONOMY_FOLDER_URL + purl_config_name))
     else:
-        # check all branches/PRs if file exists
-
         # create purl publishing request
         create_purl_request(purl_folder, os.path.join(purl_folder, purl_config_name), taxonomy_name, user_name)
 
@@ -78,7 +78,7 @@ def create_purl_request(purl_folder: str, file_path: str, taxonomy_name: str, us
         if existing_pr is not None:
             raise Exception("Already have a related pull request: " + existing_pr)
         else:
-            clone_folder = clone_project(purl_folder)
+            clone_folder = clone_project(purl_folder, user_name)
             branch_name = create_branch(clone_folder, taxonomy_name, user_name)
             push_new_config(branch_name, file_path, clone_folder, taxonomy_name)
             create_pull_request(clone_folder, taxonomy_name)
@@ -156,16 +156,20 @@ def create_branch(clone_folder, taxonomy_name, user_name):
     return branch_name
 
 
-def clone_project(purl_folder):
+def clone_project(purl_folder, user_name):
     """
     Forks and clones the PURL repository.
     :param purl_folder: folder to clone project into
+    :param user_name: git username
     :return: PURL project clone path
     """
     runcmd("cd {dir} && gh repo fork {repo} --clone=true --default-branch-only=true".format(dir=purl_folder,
                                                                                             repo=PURL_REPO))
     # runcmd("cd {dir} && gh repo clone {repo}".format(dir=purl_folder, repo=PURL_REPO))
-    return os.path.join(purl_folder, "purl.brain-bican.org")
+
+    clone_path = os.path.join(purl_folder, "purl.brain-bican.org")
+    runcmd("cd {dir} && git remote remove origin && git remote add origin https://{gh_token}@github.com/{user_name}/{repo_name}".format(dir=clone_path, gh_token=os.environ.get('GH_TOKEN'), user_name=user_name, repo_name=PURL_REPO_NAME))
+    return clone_path
 
 
 def runcmd(cmd):
