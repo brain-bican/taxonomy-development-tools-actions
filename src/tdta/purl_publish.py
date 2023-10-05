@@ -15,15 +15,16 @@ PURL_REPO = 'brain-bican/purl.brain-bican.org'
 BRANCH_NAME_FORMAT = "{user_name}-taxonomy-{taxonomy_name}"
 
 
-def publish_to_purl(file_path: str, taxonomy_name: str) -> str:
+def publish_to_purl(file_path: str, taxonomy_name: str, user_name: str) -> str:
     """
     Publishes the given taxonomy to the purl system. First checks if PURL system already has a config for the given
     taxonomy. If not, makes a pull request to create a config.
     :param file_path: path to the project root folder
     :param taxonomy_name: name of the taxonomy
+    :param user_name: authenticated GitHub username
     :return: url of the created pull request or the url of the existing PURL configuration.
     """
-    print("In PURL action 11.")
+    print("In PURL action 12.")
     if not os.environ.get('GH_TOKEN'):
         raise Exception("'GH_TOKEN' environment variable is not declared. Please follow https://brain-bican.github.io/taxonomy-development-tools/Build/ to setup.")
     else:
@@ -34,7 +35,8 @@ def publish_to_purl(file_path: str, taxonomy_name: str) -> str:
         print(runcmd("gh auth setup-git"))
         print(runcmd("git --version"))
         print(runcmd("git config --list"))
-        print(runcmd("git config user.name"))
+        print(user_name)
+        # print(runcmd("git config user.name"))
 
     work_dir = os.path.abspath(file_path)
     purl_folder = os.path.join(work_dir, "purl")
@@ -51,19 +53,21 @@ def publish_to_purl(file_path: str, taxonomy_name: str) -> str:
         # check all branches/PRs if file exists
 
         # create purl publishing request
-        create_purl_request(purl_folder, os.path.join(purl_folder, purl_config_name), taxonomy_name)
+        create_purl_request(purl_folder, os.path.join(purl_folder, purl_config_name), taxonomy_name, user_name)
 
     return "DONE"
 
 
-def create_purl_request(purl_folder: str, file_path: str, taxonomy_name: str):
+def create_purl_request(purl_folder: str, file_path: str, taxonomy_name: str, user_name: str):
     """
     Creates a purl publishing request at the purl repository.
     :param purl_folder: path of the purl folder
     :param file_path: purl config file path
     :param taxonomy_name: name of the taxonomy
+    :param user_name: github user name
     """
-    user_name = str(runcmd("gh auth setup-git && git config user.name")).strip()
+    # user_name = str(runcmd("gh auth setup-git && git config user.name")).strip()
+    runcmd("gh auth setup-git")
 
     response = requests.get('https://github.com/{user}/purl.brain-bican.org'.format(user=user_name))
     if response.status_code == 200:
