@@ -78,6 +78,7 @@ def create_purl_request(purl_folder: str, file_path: str, taxonomy_name: str, us
         if existing_pr is not None:
             raise Exception("Already have a related pull request: " + existing_pr)
         else:
+            # TODO delete folder if exists
             clone_folder = clone_project(purl_folder, user_name)
             branch_name = create_branch(clone_folder, taxonomy_name, user_name)
             push_new_config(branch_name, file_path, clone_folder, taxonomy_name)
@@ -167,7 +168,7 @@ def clone_project(purl_folder, user_name):
                                                                                             repo=PURL_REPO))
     # runcmd("cd {dir} && gh repo clone {repo}".format(dir=purl_folder, repo=PURL_REPO))
 
-    clone_path = os.path.join(purl_folder, "purl.brain-bican.org")
+    clone_path = os.path.join(purl_folder, PURL_REPO_NAME)
     runcmd("cd {dir} && git remote remove origin && git remote add origin https://{gh_token}@github.com/{user_name}/{repo_name}".format(dir=clone_path, gh_token=os.environ.get('GH_TOKEN'), user_name=user_name, repo_name=PURL_REPO_NAME))
     return clone_path
 
