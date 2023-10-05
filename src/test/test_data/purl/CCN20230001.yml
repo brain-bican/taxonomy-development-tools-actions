@@ -1,0 +1,15 @@
+# PURL configuration for https://purl.bican.org/taxonomy/CCN20230001
+
+idspace: CCN20230001
+base_url: /taxonomy/CCN20230001
+
+products:
+- CCN20230001.json: https://raw.githubusercontent.com/hkir-dev/mouse_whole_brain_taxonomy/main/CCN20230001.json
+
+base_redirect: https://github.com/hkir-dev/mouse_whole_brain_taxonomy
+
+entries:
+
+# https://purl.bican.org/taxonomy/CCN20230001/CCN20230001.json
+- exact: /CCN20230001.json
+  replacement: https://raw.githubusercontent.com/hkir-dev/mouse_whole_brain_taxonomy/main/CCN20230001.json
