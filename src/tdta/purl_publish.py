@@ -104,7 +104,7 @@ def create_pull_request(clone_folder, taxonomy_name):
                                                                                               title=title,
                                                                                               body=description,
                                                                                               repo=PURL_REPO))
-    print("Pull Request successfully created: " + pr_url)
+    print("PURL creation Pull Request successfully created: " + pr_url)
 
 
 def push_new_config(branch_name, file_path, clone_folder, taxonomy_name):
