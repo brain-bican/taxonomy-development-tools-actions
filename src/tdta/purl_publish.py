@@ -32,6 +32,8 @@ def publish_to_purl(file_path: str, taxonomy_name: str) -> str:
         print(runcmd("gh --version"))
         print(runcmd("gh auth status"))
         print(runcmd("gh auth setup-git"))
+        print(runcmd("git --version"))
+        print(runcmd("git config --list"))
         print(runcmd("git config user.name"))
 
     work_dir = os.path.abspath(file_path)
