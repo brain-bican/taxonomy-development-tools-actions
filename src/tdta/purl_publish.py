@@ -24,7 +24,7 @@ def publish_to_purl(file_path: str, taxonomy_name: str, user_name: str) -> str:
     :param user_name: authenticated GitHub username
     :return: url of the created pull request or the url of the existing PURL configuration.
     """
-    print("In PURL action 15.")
+    print("In PURL action 16.")
     if not os.environ.get('GH_TOKEN'):
         raise Exception("'GH_TOKEN' environment variable is not declared. Please follow https://brain-bican.github.io/taxonomy-development-tools/Build/ to setup.")
     else:
@@ -135,7 +135,7 @@ def push_new_config(branch_name, file_path, clone_folder, taxonomy_name):
     config_name = os.path.basename(file_path)
     new_file = shutil.copyfile(file_path, os.path.join(taxon_configs_folder, config_name))
     runcmd("cd {dir} && git add {new_file}".format(dir=clone_folder, new_file=new_file))
-    runcmd("cd {dir} && git commit -m \"New taxonomy config for {taxonomy_name}\".".format(dir=clone_folder,
+    runcmd("cd {dir} && gh auth setup-git && git commit -m \"New taxonomy config for {taxonomy_name}\".".format(dir=clone_folder,
                                                                                            taxonomy_name=taxonomy_name))
     runcmd("cd {dir} && git push -u origin {branch_name}".format(dir=clone_folder, branch_name=branch_name))
 
@@ -161,7 +161,7 @@ def clone_project(purl_folder):
     :param purl_folder: folder to clone project into
     :return: PURL project clone path
     """
-    runcmd("cd {dir} && gh repo fork {repo} --clone=true".format(dir=purl_folder,
+    runcmd("cd {dir} && gh repo fork {repo} --clone=true --default-branch-only=true".format(dir=purl_folder,
                                                                                             repo=PURL_REPO))
     # runcmd("cd {dir} && gh repo clone {repo}".format(dir=purl_folder, repo=PURL_REPO))
     return os.path.join(purl_folder, "purl.brain-bican.org")
