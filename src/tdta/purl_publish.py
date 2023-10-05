@@ -23,7 +23,7 @@ def publish_to_purl(file_path: str, taxonomy_name: str) -> str:
     :param taxonomy_name: name of the taxonomy
     :return: url of the created pull request or the url of the existing PURL configuration.
     """
-    print("In PURL action 7.")
+    print("In PURL action 8.")
     work_dir = os.path.abspath(file_path)
     purl_folder = os.path.join(work_dir, "purl")
     files = [f for f in os.listdir(purl_folder) if str(f).endswith(".yml")]
