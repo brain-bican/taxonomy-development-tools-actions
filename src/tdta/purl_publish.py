@@ -24,7 +24,8 @@ def publish_to_purl(file_path: str, taxonomy_name: str, user_name: str) -> str:
     :param user_name: authenticated GitHub username
     :return: url of the created pull request or the url of the existing PURL configuration.
     """
-    print("In PURL action 16.")
+    print("In PURL action 17.")
+    print(runcmd("git config --global user.name \"{}\"".format(user_name)))
     if not os.environ.get('GH_TOKEN'):
         raise Exception("'GH_TOKEN' environment variable is not declared. Please follow https://brain-bican.github.io/taxonomy-development-tools/Build/ to setup.")
     else:
