@@ -24,7 +24,7 @@ def publish_to_purl(file_path: str, taxonomy_name: str, user_name: str) -> str:
     :param user_name: authenticated GitHub username
     :return: url of the created pull request or the url of the existing PURL configuration.
     """
-    print("In PURL action 13.")
+    print("In PURL action 14.")
     if not os.environ.get('GH_TOKEN'):
         raise Exception("'GH_TOKEN' environment variable is not declared. Please follow https://brain-bican.github.io/taxonomy-development-tools/Build/ to setup.")
     else:
@@ -74,7 +74,7 @@ def create_purl_request(purl_folder: str, file_path: str, taxonomy_name: str, us
         raise Exception('purl.brain-bican fork (https://github.com/{user}/purl.brain-bican.org) already exists. Aborting operation. Please delete the fork and retry.'.format(user=user_name))
     else:
         existing_pr = check_pr_existence(user_name, taxonomy_name)
-        if not existing_pr:
+        if existing_pr is not None:
             raise Exception("Already have a related pull request: " + existing_pr)
         else:
             clone_folder = clone_project(purl_folder)
