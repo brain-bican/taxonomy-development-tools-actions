@@ -11,11 +11,12 @@ def main():
                                             description="The PURL publication parser",
                                             help="Published the given taxonomy to the PURL system.")
     parser_purl.add_argument('-i', '--input', action='store', type=pathlib.Path, required=True)
+    parser_purl.add_argument('-t', '--taxonomy', required=True)
 
     args = parser.parse_args()
 
     if args.action == "purl-publish":
-        publish_to_purl(str(args.input))
+        publish_to_purl(str(args.input), str(args.taxonomy))
 
 
 if __name__ == "__main__":
