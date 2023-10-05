@@ -24,7 +24,7 @@ def publish_to_purl(file_path: str, taxonomy_name: str, user_name: str) -> str:
     :param user_name: authenticated GitHub username
     :return: url of the created pull request or the url of the existing PURL configuration.
     """
-    print("In PURL action 12.")
+    print("In PURL action 13.")
     if not os.environ.get('GH_TOKEN'):
         raise Exception("'GH_TOKEN' environment variable is not declared. Please follow https://brain-bican.github.io/taxonomy-development-tools/Build/ to setup.")
     else:
@@ -94,7 +94,7 @@ def check_pr_existence(user_name: str, taxonomy_name: str) -> Optional[str]:
     branch_name = BRANCH_NAME_FORMAT.format(user_name=user_name, taxonomy_name=taxonomy_name)
     my_prs = runcmd("gh pr list --author \"@me\" --repo {repo} --json title --json url --json headRefName".format(repo=PURL_REPO))
     for pr in my_prs:
-        if pr["headRefName"] == branch_name:
+        if "headRefName" in pr and pr["headRefName"] == branch_name:
             return pr["url"]
     return None
 
