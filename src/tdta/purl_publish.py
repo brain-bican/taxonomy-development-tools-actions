@@ -1,40 +1,32 @@
 import os
 import requests
+import shutil
 import subprocess
 import logging
 
-
-#  TODO switch to main repo on release
-# PURL_TAXONOMY_FOLDER_URL = 'https://github.com/brain-bican/purl.brain-bican.org/tree/main/config/taxonomy/'
-# PURL_REPO = 'brain-bican/purl.brain-bican.org'
-PURL_TAXONOMY_FOLDER_URL = 'https://github.com/hkir-dev/purl.brain-bican.org/tree/main/config/taxonomy/'
-PURL_REPO = 'hkir-dev/purl.brain-bican.org'
+from typing import Optional
 
 
-def publish_to_purl(file_path: str) -> str:
+PURL_TAXONOMY_FOLDER_URL = 'https://github.com/brain-bican/purl.brain-bican.org/tree/main/config/taxonomy/'
+PURL_REPO = 'brain-bican/purl.brain-bican.org'
+# PURL_TAXONOMY_FOLDER_URL = 'https://github.com/hkir-dev/purl.brain-bican.org/tree/main/config/taxonomy/'
+# PURL_REPO_LOCAL = 'hkir-dev/purl.brain-bican.org'
+
+BRANCH_NAME_FORMAT = "{user_name}-taxonomy-{taxonomy_name}"
+
+
+def publish_to_purl(file_path: str, taxonomy_name: str) -> str:
     """
     Publishes the given taxonomy to the purl system. First checks if PURL system already has a config for the given
     taxonomy. If not, makes a pull request to create a config.
     :param file_path: path to the project root folder
+    :param taxonomy_name: name of the taxonomy
     :return: url of the created pull request or the url of the existing PURL configuration.
     """
     print("In PURL action 7.")
     work_dir = os.path.abspath(file_path)
-    print(work_dir)
-    print('>>>>>')
-    contents = os.listdir(work_dir)
-    for item in contents:
-        print(item)
-    print('<<<<<<')
     purl_folder = os.path.join(work_dir, "purl")
-    print(purl_folder)
-    print('>>>>>')
-    contents = os.listdir(purl_folder)
-    for item in contents:
-        print(item)
-    print('<<<<<<')
-    files = [f for f in os.listdir(os.path.abspath(purl_folder)) if os.path.isfile(f) and str(f).endswith(".yml")]
-    purl_config_name = None
+    files = [f for f in os.listdir(purl_folder) if str(f).endswith(".yml")]
     if len(files) == 0:
         raise Exception("PURL config file couldn't be found at project '/purl' folder.")
     else:
@@ -46,19 +38,125 @@ def publish_to_purl(file_path: str) -> str:
     else:
         # check all branches/PRs if file exists
 
-        # create pull request
-        create_pull_request(purl_folder, os.path.join(purl_folder, purl_config_name))
+        # create purl publishing request
+        create_purl_request(purl_folder, os.path.join(purl_folder, purl_config_name), taxonomy_name)
 
     return "DONE"
 
 
-def create_pull_request(purl_folder, file_path):
-    print("INN CPR")
-    github_token = os.environ.get('PERSONAL_ACCESS_TOKEN', "").strip()
-    runcmd("cd {dir} && gh auth login --with-token {gh_token} && gh repo fork {repo} --clone --default-branch-only".format(gh_token=github_token, dir=purl_folder, repo=PURL_REPO))
-    print("OUT CPR")
+def create_purl_request(purl_folder: str, file_path: str, taxonomy_name: str):
+    """
+    Creates a purl publishing request at the purl repository.
+    :param purl_folder: path of the purl folder
+    :param file_path: purl config file path
+    :param taxonomy_name: name of the taxonomy
+    """
+    user_name = str(runcmd("gh auth setup-git && git config user.name")).strip()
+
+    response = requests.get('https://github.com/{user}/purl.brain-bican.org'.format(user=user_name))
+    if response.status_code == 200:
+        raise Exception('purl.brain-bican fork (https://github.com/{user}/purl.brain-bican.org) already exists. Aborting operation. Please delete the fork and retry.'.format(user=user_name))
+    else:
+        existing_pr = check_pr_existence(user_name, taxonomy_name)
+        if not existing_pr:
+            raise Exception("Already have a related pull request: " + existing_pr)
+        else:
+            clone_folder = clone_project(purl_folder)
+            branch_name = create_branch(clone_folder, taxonomy_name, user_name)
+            push_new_config(branch_name, file_path, clone_folder, taxonomy_name)
+            create_pull_request(clone_folder, taxonomy_name)
+            delete_project(clone_folder)
+
+
+def check_pr_existence(user_name: str, taxonomy_name: str) -> Optional[str]:
+    """
+    Check if user already made a PR
+    :param user_name: name of the user
+    :param taxonomy_name: name of the taxonomy
+    :return: url of the pull request if a PR already exists. Otherwise, returns None.
+    """
+    branch_name = BRANCH_NAME_FORMAT.format(user_name=user_name, taxonomy_name=taxonomy_name)
+    my_prs = runcmd("gh pr list --author \"@me\" --repo {repo} --json title --json url --json headRefName".format(repo=PURL_REPO))
+    for pr in my_prs:
+        if pr["headRefName"] == branch_name:
+            return pr["url"]
+    return None
+
+
+def delete_project(clone_folder):
+    """
+    Deletes the project folder and its content.
+    :param clone_folder: path to the project folder
+    """
+    shutil.rmtree(clone_folder)
+
+
+def create_pull_request(clone_folder, taxonomy_name):
+    """
+    Creates a Pull Request at the PURL repo.
+    :param clone_folder: PURL project cloned folder
+    :param taxonomy_name: name of the taxonomy
+    """
+    title = "{} taxonomy configuration".format(taxonomy_name)
+    description = "New taxonomy configuration added for {}.".format(taxonomy_name)
+    pr_url = runcmd(
+        "cd {dir} && gh pr create --title \"{title}\" --body \"{body}\" --repo {repo}".format(dir=clone_folder,
+                                                                                              title=title,
+                                                                                              body=description,
+                                                                                              repo=PURL_REPO))
+    print("Pull Request successfully created: " + pr_url)
+
+
+def push_new_config(branch_name, file_path, clone_folder, taxonomy_name):
+    """
+    Adds the new taxonomy config to the PURL project and pushes to the branch.
+    :param branch_name: name of the current working branch
+    :param file_path: path to the config file
+    :param clone_folder: PURL project clone folder
+    :param taxonomy_name: name of the taxonomy
+    """
+    taxon_configs_folder = os.path.join(clone_folder, "config/taxonomy")
+    config_name = os.path.basename(file_path)
+    new_file = shutil.copyfile(file_path, os.path.join(taxon_configs_folder, config_name))
+    runcmd("cd {dir} && git add {new_file}".format(dir=clone_folder, new_file=new_file))
+    runcmd("cd {dir} && git commit -m \"New taxonomy config for {taxonomy_name}\".".format(dir=clone_folder,
+                                                                                           taxonomy_name=taxonomy_name))
+    runcmd("cd {dir} && git push -u origin {branch_name}".format(dir=clone_folder, branch_name=branch_name))
+
+
+def create_branch(clone_folder, taxonomy_name, user_name):
+    """
+    Creates a branch and starts working on it.
+    :param clone_folder: PURL project cloned folder
+    :param taxonomy_name: name of the taxonomy
+    :param user_name: name of the user
+    :return: name of the created branch
+    """
+    branch_name = BRANCH_NAME_FORMAT.format(user_name=user_name, taxonomy_name=taxonomy_name)
+    print(branch_name)
+    runcmd("cd {dir} && gh auth setup-git && git branch {branch_name} && git checkout {branch_name}".format(
+        dir=clone_folder, branch_name=branch_name))
+    return branch_name
+
+
+def clone_project(purl_folder):
+    """
+    Forks and clones the PURL repository.
+    :param purl_folder: folder to clone project into
+    :return: PURL project clone path
+    """
+    runcmd("cd {dir} && gh repo fork {repo} --clone=true --default-branch-only=true".format(dir=purl_folder,
+                                                                                            repo=PURL_REPO))
+    # runcmd("cd {dir} && gh repo clone {repo}".format(dir=purl_folder, repo=PURL_REPO))
+    return os.path.join(purl_folder, "purl.brain-bican.org")
+
 
 def runcmd(cmd):
+    """
+    Runs the given command in the command line.
+    :param cmd: command to run
+    :return: output of the command
+    """
     logging.info("RUNNING: {}".format(cmd))
     p = subprocess.Popen([cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, universal_newlines=True)
     (out, err) = p.communicate()
@@ -67,4 +165,5 @@ def runcmd(cmd):
         logging.error(err)
     if p.returncode != 0:
         raise Exception('Failed: {}'.format(cmd))
+    return out
 
