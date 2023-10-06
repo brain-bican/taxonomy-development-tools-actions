@@ -25,7 +25,7 @@ def publish_to_purl(file_path: str, taxonomy_name: str, user_name: str) -> str:
     :param user_name: authenticated GitHub username
     :return: url of the created pull request or the url of the existing PURL configuration.
     """
-    print("In PURL action 19.")
+    print("In PURL action 20.")
     # TODO delete
     # print(runcmd("git config --global user.name \"{}\"".format(user_name)))
     if not os.environ.get('GH_TOKEN'):
@@ -78,7 +78,7 @@ def create_purl_request(purl_folder: str, file_path: str, taxonomy_name: str, us
         if existing_pr is not None:
             raise Exception("Already have a related pull request: " + existing_pr)
         else:
-            # TODO delete folder if exists
+            delete_project(os.path.join(purl_folder, PURL_REPO_NAME))
             clone_folder = clone_project(purl_folder, user_name)
             branch_name = create_branch(clone_folder, taxonomy_name, user_name)
             push_new_config(branch_name, file_path, clone_folder, taxonomy_name)
@@ -106,7 +106,8 @@ def delete_project(clone_folder):
     Deletes the project folder and its content.
     :param clone_folder: path to the project folder
     """
-    shutil.rmtree(clone_folder)
+    if os.path.exists(clone_folder):
+        shutil.rmtree(clone_folder)
 
 
 def create_pull_request(clone_folder, taxonomy_name):
@@ -154,8 +155,11 @@ def create_branch(clone_folder, taxonomy_name, user_name):
     print(branch_name)
     runcmd("cd {dir} && gh auth setup-git && git branch {branch_name} && git checkout {branch_name}".format(
         dir=clone_folder, branch_name=branch_name))
+    # runcmd(
+    #     "cd {dir} && git remote remove origin && git remote add origin https://{user_name}:{gh_token}@github.com/{user_name}/{repo_name}.git".format(
+    #         dir=clone_folder, gh_token=os.environ.get('GH_TOKEN'), user_name=user_name, repo_name=PURL_REPO_NAME))
     runcmd(
-        "cd {dir} && git remote remove origin && git remote add origin https://{user_name}:{gh_token}@github.com/{user_name}/{repo_name}.git".format(
+        "cd {dir} && git remote set-url origin https://{user_name}:{gh_token}@github.com/{user_name}/{repo_name}.git".format(
             dir=clone_folder, gh_token=os.environ.get('GH_TOKEN'), user_name=user_name, repo_name=PURL_REPO_NAME))
     return branch_name
 
