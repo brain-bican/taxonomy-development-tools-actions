@@ -6,6 +6,7 @@ import logging
 
 from typing import Optional
 
+GITHUB_TOKEN_ENV = 'GITHUB_TOKEN'
 
 PURL_TAXONOMY_FOLDER_URL = 'https://github.com/brain-bican/purl.brain-bican.org/tree/main/config/taxonomy/'
 PURL_REPO_NAME = 'purl.brain-bican.org'
@@ -25,14 +26,14 @@ def publish_to_purl(file_path: str, taxonomy_name: str, user_name: str) -> str:
     :param user_name: authenticated GitHub username
     :return: url of the created pull request or the url of the existing PURL configuration.
     """
-    print("In PURL action 21.")
+    print("In PURL action 22.")
     # TODO delete
     # print(runcmd("git config --global user.name \"{}\"".format(user_name)))
-    if not os.environ.get('GH_TOKEN'):
+    if not os.environ.get(GITHUB_TOKEN_ENV):
         raise Exception("'GH_TOKEN' environment variable is not declared. Please follow https://brain-bican.github.io/taxonomy-development-tools/Build/ to setup.")
     else:
         # TODO delete
-        print(os.environ.get('GH_TOKEN'))
+        print(os.environ.get(GITHUB_TOKEN_ENV))
         print(runcmd("gh --version"))
         print(runcmd("gh auth status"))
         print(runcmd("gh auth setup-git"))
@@ -79,11 +80,28 @@ def create_purl_request(purl_folder: str, file_path: str, taxonomy_name: str, us
             raise Exception("Already have a related pull request: " + existing_pr)
         else:
             delete_project(os.path.join(purl_folder, PURL_REPO_NAME))
+            token_file = gh_login(purl_folder)
             clone_folder = clone_project(purl_folder, user_name)
             branch_name = create_branch(clone_folder, taxonomy_name, user_name)
             push_new_config(branch_name, file_path, clone_folder, taxonomy_name)
             create_pull_request(clone_folder, taxonomy_name)
             delete_project(clone_folder)
+#             TODO delete toke_file
+
+
+def gh_login(purl_folder):
+    github_token = os.environ.get(GITHUB_TOKEN_ENV)
+    token_file = os.path.join(purl_folder, "mytoken.txt")
+    with open(token_file, 'w') as f:
+        f.write(github_token)
+
+    runcmd("git config --global credential.helper store")
+    runcmd("gh auth setup_git")
+    runcmd("gh auth login --with-token < {}".format(token_file))
+    runcmd("gh auth setup_git")
+    print(runcmd("git config --list"))
+
+    return token_file
 
 
 def check_pr_existence(user_name: str, taxonomy_name: str) -> Optional[str]:
@@ -173,10 +191,6 @@ def clone_project(purl_folder, user_name):
     :param user_name: git username
     :return: PURL project clone path
     """
-    # TODO check
-    runcmd("git config --global credential.helper store")
-    runcmd("gh auth login")
-    print(runcmd("git config --list"))
     runcmd("cd {dir} && gh repo fork {repo} --clone=true --remote=true --default-branch-only=true"
            .format(dir=purl_folder, repo=PURL_REPO))
     # runcmd("cd {dir} && gh repo clone {repo}".format(dir=purl_folder, repo=PURL_REPO))
