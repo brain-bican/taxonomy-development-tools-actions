@@ -26,7 +26,7 @@ def publish_to_purl(file_path: str, taxonomy_name: str, user_name: str) -> str:
     :param user_name: authenticated GitHub username
     :return: url of the created pull request or the url of the existing PURL configuration.
     """
-    print("In PURL action 22.")
+    print("In PURL action 23.")
     # TODO delete
     # print(runcmd("git config --global user.name \"{}\"".format(user_name)))
     if not os.environ.get(GITHUB_TOKEN_ENV):
@@ -96,9 +96,9 @@ def gh_login(purl_folder):
         f.write(github_token)
 
     runcmd("git config --global credential.helper store")
-    runcmd("gh auth setup_git")
+    runcmd("gh auth setup-git")
     runcmd("gh auth login --with-token < {}".format(token_file))
-    runcmd("gh auth setup_git")
+    runcmd("gh auth setup-git")
     print(runcmd("git config --list"))
 
     return token_file
