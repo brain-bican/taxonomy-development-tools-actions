@@ -13,10 +13,10 @@ GITHUB_EMAIL_ENV = 'GITHUB_EMAIL'
 PURL_TAXONOMY_FOLDER_URL = 'https://github.com/brain-bican/purl.brain-bican.org/tree/main/config/taxonomy/'
 PURL_REPO_NAME = 'purl.brain-bican.org'
 PURL_REPO = 'brain-bican/{}'.format(PURL_REPO_NAME)
-# PURL_TAXONOMY_FOLDER_URL = 'https://github.com/hkir-dev/purl.brain-bican.org/tree/main/config/taxonomy/'
-# PURL_REPO_LOCAL = 'hkir-dev/purl.brain-bican.org'
 
 BRANCH_NAME_FORMAT = "{user_name}-taxonomy-{taxonomy_name}"
+
+TOKEN_FILE = "mytoken.txt"
 
 
 def publish_to_purl(file_path: str, taxonomy_name: str, user_name: str) -> str:
@@ -28,39 +28,23 @@ def publish_to_purl(file_path: str, taxonomy_name: str, user_name: str) -> str:
     :param user_name: authenticated GitHub username
     :return: url of the created pull request or the url of the existing PURL configuration.
     """
-    print("In PURL action 27.")
-    # TODO delete
-    # print(runcmd("git config --global user.name \"{}\"".format(user_name)))
+    work_dir = os.path.abspath(file_path)
+    purl_folder = os.path.join(work_dir, "purl")
+
     if not os.environ.get(GITHUB_TOKEN_ENV):
-        raise Exception("'{}' environment variable is not declared. Please follow https://brain-bican.github.io/taxonomy-development-tools/Build/ to setup.".format(GITHUB_TOKEN_ENV))
+        report_problem("'{}' environment variable is not declared. Please follow https://brain-bican.github.io/taxonomy-development-tools/Build/ to setup.".format(GITHUB_TOKEN_ENV), purl_folder)
     elif not os.environ.get(GITHUB_USER_ENV):
-        raise Exception("'{}' environment variable is not declared. Please follow https://brain-bican.github.io/taxonomy-development-tools/Build/ to setup.".format(GITHUB_USER_ENV))
+        report_problem("'{}' environment variable is not declared. Please follow https://brain-bican.github.io/taxonomy-development-tools/Build/ to setup.".format(GITHUB_USER_ENV), purl_folder)
     elif not os.environ.get(GITHUB_EMAIL_ENV):
-        raise Exception("'{}' environment variable is not declared. Please follow https://brain-bican.github.io/taxonomy-development-tools/Build/ to setup.".format(GITHUB_EMAIL_ENV))
-    else:
-        # TODO delete
-        print(os.environ.get(GITHUB_TOKEN_ENV))
-        print(runcmd("gh --version"))
-        # print(runcmd("gh auth status"))
-        # print(runcmd("gh auth setup-git"))
-        print(runcmd("git --version"))
-        print(runcmd("git config --list"))
-        # print(runcmd("git config user.name"))
+        report_problem("'{}' environment variable is not declared. Please follow https://brain-bican.github.io/taxonomy-development-tools/Build/ to setup.".format(GITHUB_EMAIL_ENV), purl_folder)
 
     user_name = os.environ.get(GITHUB_USER_ENV)
-    print(user_name)
-    print(os.environ.get(GITHUB_EMAIL_ENV))
     runcmd("git config --global user.name \"{}\"".format(user_name))
     runcmd("git config --global user.email \"{}\"".format(os.environ.get(GITHUB_EMAIL_ENV)))
 
-    print(runcmd("git config user.name"))
-    print(runcmd("git config user.email"))
-
-    work_dir = os.path.abspath(file_path)
-    purl_folder = os.path.join(work_dir, "purl")
     files = [f for f in os.listdir(purl_folder) if str(f).endswith(".yml")]
     if len(files) == 0:
-        raise Exception("PURL config file couldn't be found at project '/purl' folder.")
+        report_problem("PURL config file couldn't be found at project '/purl' folder.", purl_folder)
     else:
         purl_config_name = files[0]
 
@@ -71,7 +55,19 @@ def publish_to_purl(file_path: str, taxonomy_name: str, user_name: str) -> str:
         # create purl publishing request
         create_purl_request(purl_folder, os.path.join(purl_folder, purl_config_name), taxonomy_name, user_name)
 
+    cleanup(purl_folder)
     return "DONE"
+
+
+def report_problem(msg: str, purl_folder: str):
+    """
+    Logs the problem and raises an exception.
+    :param msg: error message
+    :param purl_folder: folder where temp files are created inside
+    """
+    print(msg)
+    cleanup(purl_folder)
+    raise Exception(msg)
 
 
 def create_purl_request(purl_folder: str, file_path: str, taxonomy_name: str, user_name: str):
@@ -82,38 +78,43 @@ def create_purl_request(purl_folder: str, file_path: str, taxonomy_name: str, us
     :param taxonomy_name: name of the taxonomy
     :param user_name: github user name
     """
-    # user_name = str(runcmd("gh auth setup-git && git config user.name")).strip()
-    # runcmd("gh auth setup-git")
-    token_file = gh_login(purl_folder)
+    gh_login(purl_folder)
 
     response = requests.get('https://github.com/{user}/purl.brain-bican.org'.format(user=user_name))
     if response.status_code == 200:
-        raise Exception('purl.brain-bican fork (https://github.com/{user}/purl.brain-bican.org) already exists. Aborting operation. Please delete the fork and retry.'.format(user=user_name))
+        report_problem('purl.brain-bican fork (https://github.com/{user}/purl.brain-bican.org) already exists. Aborting operation. Please delete the fork and retry.'.format(user=user_name), purl_folder)
     else:
         existing_pr = check_pr_existence(user_name, taxonomy_name)
         if existing_pr is not None:
-            raise Exception("Already have a related pull request: " + existing_pr)
+            report_problem("Already have a related pull request: " + existing_pr, purl_folder)
         else:
-            delete_project(os.path.join(purl_folder, PURL_REPO_NAME))
+            cleanup(purl_folder)
             clone_folder = clone_project(purl_folder, user_name)
             branch_name = create_branch(clone_folder, taxonomy_name, user_name)
             push_new_config(branch_name, file_path, clone_folder, taxonomy_name)
             create_pull_request(clone_folder, taxonomy_name)
-            delete_project(clone_folder)
 
-    # TODO delete token_file
+
+def cleanup(purl_folder):
+    """
+    Cleanups all intermediate file/folders.
+    :param purl_folder: path of the purl folder where intermediate files are added
+    """
+    delete_project(os.path.join(purl_folder, PURL_REPO_NAME))
+    token_file = os.path.join(purl_folder, TOKEN_FILE)
+    if os.path.exists(token_file):
+        os.remove(token_file)
 
 
 def gh_login(purl_folder):
     github_token = os.environ.get(GITHUB_TOKEN_ENV)
-    token_file = os.path.join(purl_folder, "mytoken.txt")
+    token_file = os.path.join(purl_folder, TOKEN_FILE)
     with open(token_file, 'w') as f:
         f.write(github_token)
 
     runcmd("git config --global credential.helper store")
     runcmd("gh auth login --with-token < {}".format(token_file))
     runcmd("gh auth setup-git")
-    print(runcmd("git config --list"))
 
     return token_file
 
@@ -184,7 +185,6 @@ def create_branch(clone_folder, taxonomy_name, user_name):
     :return: name of the created branch
     """
     branch_name = BRANCH_NAME_FORMAT.format(user_name=user_name, taxonomy_name=taxonomy_name)
-    print(branch_name)
     runcmd("cd {dir} && gh auth setup-git && git branch {branch_name} && git checkout {branch_name}".format(
         dir=clone_folder, branch_name=branch_name))
     # runcmd(
