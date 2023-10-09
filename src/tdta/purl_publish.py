@@ -26,7 +26,7 @@ def publish_to_purl(file_path: str, taxonomy_name: str, user_name: str) -> str:
     :param user_name: authenticated GitHub username
     :return: url of the created pull request or the url of the existing PURL configuration.
     """
-    print("In PURL action 24.")
+    print("In PURL action 25.")
     # TODO delete
     # print(runcmd("git config --global user.name \"{}\"".format(user_name)))
     if not os.environ.get(GITHUB_TOKEN_ENV):
@@ -35,8 +35,8 @@ def publish_to_purl(file_path: str, taxonomy_name: str, user_name: str) -> str:
         # TODO delete
         print(os.environ.get(GITHUB_TOKEN_ENV))
         print(runcmd("gh --version"))
-        print(runcmd("gh auth status"))
-        print(runcmd("gh auth setup-git"))
+        # print(runcmd("gh auth status"))
+        # print(runcmd("gh auth setup-git"))
         print(runcmd("git --version"))
         print(runcmd("git config --list"))
         print(user_name)
@@ -69,7 +69,8 @@ def create_purl_request(purl_folder: str, file_path: str, taxonomy_name: str, us
     :param user_name: github user name
     """
     # user_name = str(runcmd("gh auth setup-git && git config user.name")).strip()
-    runcmd("gh auth setup-git")
+    # runcmd("gh auth setup-git")
+    token_file = gh_login(purl_folder)
 
     response = requests.get('https://github.com/{user}/purl.brain-bican.org'.format(user=user_name))
     if response.status_code == 200:
@@ -80,13 +81,13 @@ def create_purl_request(purl_folder: str, file_path: str, taxonomy_name: str, us
             raise Exception("Already have a related pull request: " + existing_pr)
         else:
             delete_project(os.path.join(purl_folder, PURL_REPO_NAME))
-            token_file = gh_login(purl_folder)
             clone_folder = clone_project(purl_folder, user_name)
             branch_name = create_branch(clone_folder, taxonomy_name, user_name)
             push_new_config(branch_name, file_path, clone_folder, taxonomy_name)
             create_pull_request(clone_folder, taxonomy_name)
             delete_project(clone_folder)
-#             TODO delete toke_file
+
+    # TODO delete token_file
 
 
 def gh_login(purl_folder):
