@@ -6,7 +6,7 @@ import logging
 
 from typing import Optional
 
-GITHUB_TOKEN_ENV = 'GITHUB_TOKEN'
+GITHUB_TOKEN_ENV = 'GITHUB_AUTH_TOKEN'
 
 PURL_TAXONOMY_FOLDER_URL = 'https://github.com/brain-bican/purl.brain-bican.org/tree/main/config/taxonomy/'
 PURL_REPO_NAME = 'purl.brain-bican.org'
@@ -26,7 +26,7 @@ def publish_to_purl(file_path: str, taxonomy_name: str, user_name: str) -> str:
     :param user_name: authenticated GitHub username
     :return: url of the created pull request or the url of the existing PURL configuration.
     """
-    print("In PURL action 23.")
+    print("In PURL action 24.")
     # TODO delete
     # print(runcmd("git config --global user.name \"{}\"".format(user_name)))
     if not os.environ.get(GITHUB_TOKEN_ENV):
