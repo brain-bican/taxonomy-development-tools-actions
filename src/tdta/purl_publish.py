@@ -7,6 +7,8 @@ import logging
 from typing import Optional
 
 GITHUB_TOKEN_ENV = 'GITHUB_AUTH_TOKEN'
+GITHUB_USER_ENV = 'GITHUB_USER'
+GITHUB_EMAIL_ENV = 'GITHUB_EMAIL'
 
 PURL_TAXONOMY_FOLDER_URL = 'https://github.com/brain-bican/purl.brain-bican.org/tree/main/config/taxonomy/'
 PURL_REPO_NAME = 'purl.brain-bican.org'
@@ -26,11 +28,15 @@ def publish_to_purl(file_path: str, taxonomy_name: str, user_name: str) -> str:
     :param user_name: authenticated GitHub username
     :return: url of the created pull request or the url of the existing PURL configuration.
     """
-    print("In PURL action 26.")
+    print("In PURL action 27.")
     # TODO delete
     # print(runcmd("git config --global user.name \"{}\"".format(user_name)))
     if not os.environ.get(GITHUB_TOKEN_ENV):
-        raise Exception("'GH_TOKEN' environment variable is not declared. Please follow https://brain-bican.github.io/taxonomy-development-tools/Build/ to setup.")
+        raise Exception("'{}' environment variable is not declared. Please follow https://brain-bican.github.io/taxonomy-development-tools/Build/ to setup.".format(GITHUB_TOKEN_ENV))
+    elif not os.environ.get(GITHUB_USER_ENV):
+        raise Exception("'{}' environment variable is not declared. Please follow https://brain-bican.github.io/taxonomy-development-tools/Build/ to setup.".format(GITHUB_USER_ENV))
+    elif not os.environ.get(GITHUB_EMAIL_ENV):
+        raise Exception("'{}' environment variable is not declared. Please follow https://brain-bican.github.io/taxonomy-development-tools/Build/ to setup.".format(GITHUB_EMAIL_ENV))
     else:
         # TODO delete
         print(os.environ.get(GITHUB_TOKEN_ENV))
@@ -39,8 +45,16 @@ def publish_to_purl(file_path: str, taxonomy_name: str, user_name: str) -> str:
         # print(runcmd("gh auth setup-git"))
         print(runcmd("git --version"))
         print(runcmd("git config --list"))
-        print(user_name)
         # print(runcmd("git config user.name"))
+
+    user_name = os.environ.get(GITHUB_USER_ENV)
+    print(user_name)
+    print(os.environ.get(GITHUB_EMAIL_ENV))
+    runcmd("git config --global user.name \"{}\"".format(user_name))
+    runcmd("git config --global user.email \"{}\"".format(os.environ.get(GITHUB_EMAIL_ENV)))
+
+    print(runcmd("git config user.name"))
+    print(runcmd("git config user.email"))
 
     work_dir = os.path.abspath(file_path)
     purl_folder = os.path.join(work_dir, "purl")
