@@ -26,8 +26,8 @@ def asynch_table_read(output_folder):
     print("sleep done")
     work_dir = os.path.abspath(output_folder)
     print(work_dir)
-    # response = requests.get('http://localhost:3000/table.json?limit=20&shape=value_rows')
-    response = requests.get('https://raw.githubusercontent.com/hkir-dev/cell-type-annotation-tools/main/src/test/test_data/hierarchy.json')
+    response = requests.get('http://localhost:3000/table.json?limit=20&shape=value_rows')
+    # response = requests.get('https://raw.githubusercontent.com/hkir-dev/cell-type-annotation-tools/main/src/test/test_data/hierarchy.json')
     data = response.json()
 
     with open(os.path.join(work_dir, "out.json"), "w") as stream:
