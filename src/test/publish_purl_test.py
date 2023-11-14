@@ -6,7 +6,7 @@ from tdta.purl_publish import publish_to_purl
 TEST_DATA_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), "./test_data/")
 
 
-class CellTypeAnnotationTests(unittest.TestCase):
+class PurlPublishingTests(unittest.TestCase):
     def setUp(self):
         os.environ["GH_TOKEN"] = ""
 
