@@ -16,7 +16,6 @@ def export_cas_data(sqlite_db: str, output_file: str):
     :param sqlite_db: db file path
     :param output_file: output json path
     """
-    print("INN export_cas_data")
     cta = CellTypeAnnotation("", list())
 
     cas_tables = get_table_names(sqlite_db)
