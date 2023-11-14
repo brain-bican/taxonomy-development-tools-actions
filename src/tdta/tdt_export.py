@@ -1,11 +1,11 @@
-import os
 import sqlite3
-import requests
-import threading
 import ast
-import time
+import json
 from contextlib import closing
-from ctat.cell_type_annotation import CellTypeAnnotation, Annotation, Labelset, AnnotationTransfer, UserAnnotation
+from ctat.cell_type_annotation import (CellTypeAnnotation, Annotation, Labelset, AnnotationTransfer,
+                                       UserAnnotation, AutomatedAnnotation, serialize_to_json)
+
+CONFLICT_TBL_EXT = "_conflict"
 
 cas_table_postfixes = ["_annotation", "_labelset", "_metadata", "_annotation_transfer"]
 
@@ -23,14 +23,15 @@ def export_cas_data(sqlite_db: str, output_file: str):
     for table_name in cas_tables:
         if table_name.endswith("_metadata"):
             parse_metadata_data(cta, sqlite_db, table_name)
-        if table_name.endswith("_annotation"):
+        elif table_name.endswith("_annotation"):
             parse_annotation_data(cta, sqlite_db, table_name)
-        if table_name.endswith("_labelset"):
+        elif table_name.endswith("_labelset"):
             parse_labelset_data(cta, sqlite_db, table_name)
-        if table_name.endswith("_annotation_transfer"):
+        elif table_name.endswith("_annotation_transfer"):
             parse__annotation_transfer_data(cta, sqlite_db, table_name)
-    print("OUTTT")
 
+    serialize_to_json(cta, output_file, True)
+    print("CAS json successfully created at: {}".format(output_file))
     return cta
 
 
@@ -40,8 +41,16 @@ def parse_metadata_data(cta, sqlite_db, table_name):
     :param cta: cell type annotation schema object.
     :param sqlite_db: db file path
     :param table_name: name of the metadata table
+    :return : True if metadata can be ingested, False otherwise
     """
-    pass
+    with closing(sqlite3.connect(sqlite_db)) as connection:
+        with closing(connection.cursor()) as cursor:
+            rows = cursor.execute("SELECT * FROM {}_view".format(table_name)).fetchall()
+            columns = list(map(lambda x: x[0], cursor.description))
+            if len(rows) > 0:
+                auto_fill_object_from_row(cta, columns, rows[0])
+                return True
+    return False
 
 
 def parse_annotation_data(cta, sqlite_db, table_name):
@@ -53,13 +62,13 @@ def parse_annotation_data(cta, sqlite_db, table_name):
     """
     with closing(sqlite3.connect(sqlite_db)) as connection:
         with closing(connection.cursor()) as cursor:
-            rows = cursor.execute("SELECT * FROM {}".format(table_name)).fetchall()
+            rows = cursor.execute("SELECT * FROM {}_view".format(table_name)).fetchall()
             columns = list(map(lambda x: x[0], cursor.description))
-            print(columns)
-            print(rows[0])
-
             if len(rows) > 0:
-                annotations = list()
+                if not cta.annotations:
+                    annotations = list()
+                else:
+                    annotations = cta.annotations
                 for row in rows:
                     annotation = Annotation("", "")
                     auto_fill_object_from_row(annotation, columns, row)
@@ -67,10 +76,9 @@ def parse_annotation_data(cta, sqlite_db, table_name):
                     user_annotations = list()
                     obj_fields = vars(annotation)
                     for column in columns:
-                        if column not in obj_fields and column not in ["row_number"]:
+                        if column not in obj_fields and column not in ["row_number", "message"]:
                             user_annotations.append(UserAnnotation(column, str(row[columns.index(column)])))
                     annotation.user_annotations = user_annotations
-                    # handle outlier columns
 
                     annotations.append(annotation)
                 cta.annotations = annotations
@@ -83,7 +91,26 @@ def parse_labelset_data(cta, sqlite_db, table_name):
     :param sqlite_db: db file path
     :param table_name: name of the metadata table
     """
-    pass
+    with closing(sqlite3.connect(sqlite_db)) as connection:
+        with closing(connection.cursor()) as cursor:
+            rows = cursor.execute("SELECT * FROM {}_view".format(table_name)).fetchall()
+            columns = list(map(lambda x: x[0], cursor.description))
+            if len(rows) > 0:
+                if not cta.labelsets:
+                    labelsets = list()
+                else:
+                    labelsets = cta.labelsets
+                renamed_columns = [str(c).replace("automated_annotation_", "") for c in columns]
+                for row in rows:
+                    labelset = Labelset("", "")
+                    auto_fill_object_from_row(labelset, columns, row)
+                    # handle automated_annotation
+                    if row[renamed_columns.index("algorithm_name")]:
+                        automated_annotation = AutomatedAnnotation("", "", "", "")
+                        auto_fill_object_from_row(automated_annotation, renamed_columns, row)
+                        labelset.automated_annotation = automated_annotation
+                    labelsets.append(labelset)
+                cta.labelsets = labelsets
 
 
 def parse__annotation_transfer_data(cta, sqlite_db, table_name):
@@ -93,7 +120,22 @@ def parse__annotation_transfer_data(cta, sqlite_db, table_name):
     :param sqlite_db: db file path
     :param table_name: name of the metadata table
     """
-    pass
+    with closing(sqlite3.connect(sqlite_db)) as connection:
+        with closing(connection.cursor()) as cursor:
+            rows = cursor.execute("SELECT * FROM {}_view".format(table_name)).fetchall()
+            columns = list(map(lambda x: x[0], cursor.description))
+            if len(rows) > 0:
+                for row in rows:
+                    if "target_node_accession" in columns and row[columns.index("target_node_accession")]:
+                        filtered_annotations = [a for a in cta.annotations
+                                                if a.cell_set_accession == row[columns.index("target_node_accession")]]
+                        if filtered_annotations:
+                            at = AnnotationTransfer("", "", "", "", "")
+                            auto_fill_object_from_row(at, columns, row)
+                            if filtered_annotations[0].transferred_annotations:
+                                filtered_annotations[0].transferred_annotations.append(at)
+                            else:
+                                filtered_annotations[0].transferred_annotations = [at]
 
 
 def get_table_names(sqlite_db):
@@ -105,10 +147,8 @@ def get_table_names(sqlite_db):
     cas_tables = list()
     with closing(sqlite3.connect(sqlite_db)) as connection:
         with closing(connection.cursor()) as cursor:
-            rows = cursor.execute("SELECT * FROM 'table'").fetchall()
+            rows = cursor.execute("SELECT * FROM table_view").fetchall()
             columns = list(map(lambda x: x[0], cursor.description))
-            print(columns)
-            print(rows)
             table_column_index = columns.index('table')
             for row in rows:
                 if str(row[table_column_index]).endswith(tuple(cas_table_postfixes)):
@@ -125,7 +165,15 @@ def auto_fill_object_from_row(obj, columns, row):
     """
     for column in columns:
         if hasattr(obj, column):
-            value = str(row[columns.index(column)])
-            if value.startswith("[") and value.endswith("]"):
-                value = ast.literal_eval(value)
-            setattr(obj, column, value)
+            value = row[columns.index(column)]
+            if value:
+                if value.startswith("[") and value.endswith("]"):
+                    value = ast.literal_eval(value)
+                setattr(obj, column, value)
+        if 'message' in columns and row[columns.index('message')]:
+            # process invalid data
+            messages = json.loads(row[columns.index('message')])
+            for msg in messages:
+                if msg["column"] in columns:
+                    setattr(obj, msg["column"], msg["value"])
+
