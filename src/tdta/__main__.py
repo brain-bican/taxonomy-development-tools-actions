@@ -18,6 +18,8 @@ def main():
     parser_export = subparsers.add_parser("export", add_help=False,
                                           description="The data exporter parser",
                                           help="Gather data from TDT tables and saves CAS data to the output location.")
+    parser_export.add_argument('-db', '--database', action='store', type=pathlib.Path, required=True,
+                               help="Database file path.")
     parser_export.add_argument('-o', '--output', action='store', type=pathlib.Path, required=True,
                                help="Output folder path.")
 
@@ -26,7 +28,7 @@ def main():
     if args.action == "purl-publish":
         publish_to_purl(str(args.input), str(args.taxonomy), str(args.user))
     elif args.action == "export":
-        export_cas_data(args.output)
+        export_cas_data(args.database, args.output)
 
 
 if __name__ == "__main__":
