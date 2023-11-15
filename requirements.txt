@@ -1,2 +1,2 @@
 requests
-ctat==0.0.5.dev1
+ctat==0.0.1

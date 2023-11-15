@@ -46,5 +46,5 @@ class CASExportTests(unittest.TestCase):
 
         self.assertTrue("user_annotations" in test_annotation)
         self.assertEqual(8, len(test_annotation["user_annotations"]))
-        self.assertTrue({'annotation_set': 'Cluster size', 'cell_label': '16393'} in test_annotation["user_annotations"])
-        self.assertTrue({'annotation_set': 'region.info _Frequency_', 'cell_label': 'PuR(0.52) | CaH(0.39)'} in test_annotation["user_annotations"])
+        self.assertTrue({'labelset': 'Cluster size', 'cell_label': '16393'} in test_annotation["user_annotations"])
+        self.assertTrue({'labelset': 'region.info _Frequency_', 'cell_label': 'PuR(0.52) | CaH(0.39)'} in test_annotation["user_annotations"])
