@@ -166,8 +166,17 @@ def auto_fill_object_from_row(obj, columns, row):
         if hasattr(obj, column):
             value = row[columns.index(column)]
             if value:
-                if value.startswith("[") and value.endswith("]"):
-                    value = ast.literal_eval(value)
+                if value.strip().startswith("[") and value.strip().endswith("]"):
+                    value = value.strip()[1:-1].strip().split(",")
+                    list_value = []
+                    for item in value:
+                        if item.strip().startswith("\"") and item.strip().endswith("\""):
+                            item = item.strip()[1:-1].strip()
+                        elif item.strip().startswith("'") and item.strip().endswith("'"):
+                            item = item.strip()[1:-1].strip()
+                        list_value.append(item)
+                    value = list_value
+                    # value = ast.literal_eval(value)
                 setattr(obj, column, value)
         if 'message' in columns and row[columns.index('message')]:
             # process invalid data
