@@ -23,7 +23,7 @@ setup(
     package_dir={'': 'src'},
     packages=["tdta"],
     include_package_data=True,
-    install_requires=['requests'],
+    install_requires=['requests', 'cas-tools'],
     entry_points={
         "console_scripts": [
             "tdta=tdta.__main__:main",
