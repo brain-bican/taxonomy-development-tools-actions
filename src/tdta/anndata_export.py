@@ -16,7 +16,7 @@ def export_anndata(sqlite_db: str, json_file: str, output_file: str, dataset_cac
     :param output_file: output anndata path
     :param dataset_cache_folder: anndata cache folder path
     """
-    project_config = read_project_config(Path(output_file).parent.absolute())
+    project_config = read_project_config(Path(json_file).parent.absolute())
     if "matrix_file_id" in project_config:
         export_cas_data(sqlite_db, json_file, dataset_cache_folder)
         matrix_file_id = str(project_config["matrix_file_id"]).strip()
