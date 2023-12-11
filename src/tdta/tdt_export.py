@@ -1,20 +1,27 @@
+import os
 import sqlite3
 import ast
 import json
 from contextlib import closing
-from ctat.cell_type_annotation import (CellTypeAnnotation, Annotation, Labelset, AnnotationTransfer,
-                                       UserAnnotation, AutomatedAnnotation, serialize_to_json)
+from pathlib import Path
+
+from tdta.utils import read_project_config
+from cas.model import (CellTypeAnnotation, Annotation, Labelset, AnnotationTransfer, UserAnnotation, AutomatedAnnotation)
+from cas.file_utils import write_json_file
+from cas.matrix_file.resolver import resolve_matrix_file
+from cas.populate_cell_ids import add_cell_ids
 
 CONFLICT_TBL_EXT = "_conflict"
 
 cas_table_postfixes = ["_annotation", "_labelset", "_metadata", "_annotation_transfer"]
 
 
-def export_cas_data(sqlite_db: str, output_file: str):
+def export_cas_data(sqlite_db: str, output_file: str, dataset_cache_folder: str = None):
     """
     Reads all data from TDT tables and generates CAS json.
     :param sqlite_db: db file path
     :param output_file: output json path
+    :param dataset_cache_folder: anndata cache folder path
     """
     cta = CellTypeAnnotation("", list())
 
@@ -29,7 +36,18 @@ def export_cas_data(sqlite_db: str, output_file: str):
         elif table_name.endswith("_annotation_transfer"):
             parse__annotation_transfer_data(cta, sqlite_db, table_name)
 
-    serialize_to_json(cta, output_file, True)
+    project_config = read_project_config(Path(output_file).parent.absolute())
+
+    if "matrix_file_id" in project_config:
+        matrix_file_id = str(project_config["matrix_file_id"]).strip()
+        anndata = resolve_matrix_file(matrix_file_id, dataset_cache_folder)
+        cas_json = add_cell_ids(cta.to_dict(), anndata)
+        with open(output_file, "w") as json_file:
+            json.dump(cas_json, json_file, indent=2)
+    else:
+        print("WARN: 'matrix_file_id' not specified in the project configuration. Skipping cell_id population")
+        write_json_file(cta, output_file, False)
+
     print("CAS json successfully created at: {}".format(output_file))
     return cta
 
