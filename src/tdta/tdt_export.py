@@ -184,10 +184,14 @@ def auto_fill_object_from_row(obj, columns, row):
         if hasattr(obj, column):
             value = row[columns.index(column)]
             if value:
-                if value.strip().startswith("[") and value.strip().endswith("]"):
-                    value = value.strip()[1:-1].strip().split(",")
+                if isinstance(type(getattr(obj, column)), list):
+                    if value.strip().startswith("\"") and value.strip().endswith("\""):
+                        value = value.strip()[1:-1].strip()
+                    elif value.strip().startswith("'") and value.strip().endswith("'"):
+                        value = value.strip()[1:-1].strip()
+                    values = value.split("|")
                     list_value = []
-                    for item in value:
+                    for item in values:
                         if item.strip().startswith("\"") and item.strip().endswith("\""):
                             item = item.strip()[1:-1].strip()
                         elif item.strip().startswith("'") and item.strip().endswith("'"):
