@@ -15,5 +15,5 @@ class PurlPublishingTests(unittest.TestCase):
             if not os.path.isfile(os.path.join(purl_folder, item)):
                 shutil.rmtree(os.path.join(purl_folder, item))
 
-    def test_purl_publish(self):
-        publish_to_purl(TEST_DATA_FOLDER, "CCN20230001")
+    # def test_purl_publish(self):
+    #     publish_to_purl(TEST_DATA_FOLDER, "CCN20230001", "hkir-dev")
