@@ -13,7 +13,7 @@ from cas.populate_cell_ids import add_cell_ids
 
 CONFLICT_TBL_EXT = "_conflict"
 
-cas_tables = ["annotation", "labelset", "metadata", "annotation_transfer"]
+cas_table_names = ["annotation", "labelset", "metadata", "annotation_transfer"]
 
 
 def export_cas_data(sqlite_db: str, output_file: str, dataset_cache_folder: str = None):
@@ -168,7 +168,7 @@ def get_table_names(sqlite_db):
             columns = list(map(lambda x: x[0], cursor.description))
             table_column_index = columns.index('table')
             for row in rows:
-                if str(row[table_column_index]) in cas_tables:
+                if str(row[table_column_index]) in cas_table_names:
                     cas_tables.append(str(row[table_column_index]))
     return cas_tables
 
