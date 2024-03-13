@@ -13,7 +13,7 @@ from cas.populate_cell_ids import add_cell_ids
 
 CONFLICT_TBL_EXT = "_conflict"
 
-cas_table_postfixes = ["_annotation", "_labelset", "_metadata", "_annotation_transfer"]
+cas_tables = ["annotation", "labelset", "metadata", "annotation_transfer"]
 
 
 def export_cas_data(sqlite_db: str, output_file: str, dataset_cache_folder: str = None):
@@ -27,13 +27,13 @@ def export_cas_data(sqlite_db: str, output_file: str, dataset_cache_folder: str 
 
     cas_tables = get_table_names(sqlite_db)
     for table_name in cas_tables:
-        if table_name.endswith("_metadata"):
+        if table_name == "metadata":
             parse_metadata_data(cta, sqlite_db, table_name)
-        elif table_name.endswith("_annotation"):
+        elif table_name == "annotation":
             parse_annotation_data(cta, sqlite_db, table_name)
-        elif table_name.endswith("_labelset"):
+        elif table_name == "labelset":
             parse_labelset_data(cta, sqlite_db, table_name)
-        elif table_name.endswith("_annotation_transfer"):
+        elif table_name == "annotation_transfer":
             parse__annotation_transfer_data(cta, sqlite_db, table_name)
 
     project_config = read_project_config(Path(output_file).parent.absolute())
@@ -168,7 +168,7 @@ def get_table_names(sqlite_db):
             columns = list(map(lambda x: x[0], cursor.description))
             table_column_index = columns.index('table')
             for row in rows:
-                if str(row[table_column_index]).endswith(tuple(cas_table_postfixes)):
+                if str(row[table_column_index]) in cas_tables:
                     cas_tables.append(str(row[table_column_index]))
     return cas_tables
 
