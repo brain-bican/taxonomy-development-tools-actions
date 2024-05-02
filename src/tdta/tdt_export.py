@@ -41,7 +41,14 @@ def export_cas_data(sqlite_db: str, output_file: str, dataset_cache_folder: str 
     if "matrix_file_id" in project_config:
         matrix_file_id = str(project_config["matrix_file_id"]).strip()
         anndata = resolve_matrix_file(matrix_file_id, dataset_cache_folder)
-        cas_json = add_cell_ids(cta.to_dict(), anndata)
+        labelsets = cta.labelsets.copy()
+        labelsets.sort(key=lambda x: x.rank)
+        labelset_names = [labelset.name for labelset in labelsets]
+
+        cas_json = add_cell_ids(cta.to_dict(), anndata, labelsets=labelset_names)
+        if cas_json is None:
+            print("WARN: Cell IDs population operation failed, skipping cell_id population")
+            cas_json = cta.to_dict()
         with open(output_file, "w") as json_file:
             json.dump(cas_json, json_file, indent=2)
     else:
