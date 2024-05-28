@@ -6,7 +6,7 @@ from contextlib import closing
 from pathlib import Path
 
 from tdta.utils import read_project_config
-from cas.model import (CellTypeAnnotation, Annotation, Labelset, AnnotationTransfer, AutomatedAnnotation)
+from cas.model import (CellTypeAnnotation, Annotation, Labelset, AnnotationTransfer, AutomatedAnnotation, Review)
 from cas.file_utils import write_json_file
 from cas.matrix_file.resolver import resolve_matrix_file
 from cas.populate_cell_ids import add_cell_ids
@@ -34,7 +34,9 @@ def export_cas_data(sqlite_db: str, output_file: str, dataset_cache_folder: str 
         elif table_name == "labelset":
             parse_labelset_data(cta, sqlite_db, table_name)
         elif table_name == "annotation_transfer":
-            parse__annotation_transfer_data(cta, sqlite_db, table_name)
+            parse_annotation_transfer_data(cta, sqlite_db, table_name)
+        elif table_name == "review":
+            parse_review_data(cta, sqlite_db, table_name)
 
     project_config = read_project_config(Path(output_file).parent.absolute())
 
@@ -137,7 +139,7 @@ def parse_labelset_data(cta, sqlite_db, table_name):
                 cta.labelsets = labelsets
 
 
-def parse__annotation_transfer_data(cta, sqlite_db, table_name):
+def parse_annotation_transfer_data(cta, sqlite_db, table_name):
     """
     Reads 'Annotation Transfer' table data into the CAS object
     :param cta: cell type annotation schema object.
@@ -161,6 +163,29 @@ def parse__annotation_transfer_data(cta, sqlite_db, table_name):
                             else:
                                 filtered_annotations[0].transferred_annotations = [at]
 
+def parse_review_data(cta, sqlite_db, table_name):
+    """
+    Reads 'Annotation Review' table data into the CAS object
+    :param cta: cell type annotation schema object.
+    :param sqlite_db: db file path
+    :param table_name: name of the metadata table
+    """
+    with closing(sqlite3.connect(sqlite_db)) as connection:
+        with closing(connection.cursor()) as cursor:
+            rows = cursor.execute("SELECT * FROM {}_view".format(table_name)).fetchall()
+            columns = list(map(lambda x: x[0], cursor.description))
+            if len(rows) > 0:
+                for row in rows:
+                    if "target_node_accession" in columns and row[columns.index("target_node_accession")]:
+                        filtered_annotations = [a for a in cta.annotations
+                                                if a.cell_set_accession == row[columns.index("target_node_accession")]]
+                        if filtered_annotations:
+                            ar = Review("", "", "", "", "")
+                            auto_fill_object_from_row(ar, columns, row)
+                            if filtered_annotations[0].reviews:
+                                filtered_annotations[0].reviews.append(ar)
+                            else:
+                                filtered_annotations[0].reviews = [ar]
 
 def get_table_names(sqlite_db):
     """
