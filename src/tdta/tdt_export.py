@@ -102,7 +102,7 @@ def parse_annotation_data(cta, sqlite_db, table_name):
                     author_annotation_fields = dict()
                     obj_fields = vars(annotation)
                     for column in columns:
-                        if column not in obj_fields and column not in ["row_number", "message"]:
+                        if column not in obj_fields and column not in ["row_number", "message", "history"]:
                             author_annotation_fields[column] = str(row[columns.index(column)])
                     annotation.author_annotation_fields = author_annotation_fields
 
