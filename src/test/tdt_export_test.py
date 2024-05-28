@@ -47,7 +47,7 @@ class CASExportTests(unittest.TestCase):
         self.assertFalse("transferred_annotations" in test_annotation)
         self.assertFalse("rationale_dois" in test_annotation)
 
-        self.assertTrue("user_annotations" in test_annotation)
-        self.assertEqual(12, len(test_annotation["user_annotations"]))
-        self.assertTrue({'labelset': 'Cluster size', 'cell_label': '16393'} in test_annotation["user_annotations"])
-        self.assertTrue({'labelset': 'region.info _Frequency_', 'cell_label': 'PuR(0.52) | CaH(0.39)'} in test_annotation["user_annotations"])
+        self.assertTrue("author_annotation_fields" in test_annotation)
+        self.assertEqual(12, len(test_annotation["author_annotation_fields"]))
+        self.assertEqual('16393', test_annotation["author_annotation_fields"]['Cluster size'])
+        self.assertEqual('PuR(0.52) | CaH(0.39)', test_annotation["author_annotation_fields"]['region.info _Frequency_'])

@@ -6,7 +6,7 @@ from contextlib import closing
 from pathlib import Path
 
 from tdta.utils import read_project_config
-from cas.model import (CellTypeAnnotation, Annotation, Labelset, AnnotationTransfer, UserAnnotation, AutomatedAnnotation)
+from cas.model import (CellTypeAnnotation, Annotation, Labelset, AnnotationTransfer, AutomatedAnnotation)
 from cas.file_utils import write_json_file
 from cas.matrix_file.resolver import resolve_matrix_file
 from cas.populate_cell_ids import add_cell_ids
@@ -96,13 +96,13 @@ def parse_annotation_data(cta, sqlite_db, table_name):
                 for row in rows:
                     annotation = Annotation("", "")
                     auto_fill_object_from_row(annotation, columns, row)
-                    # handle user_annotations
-                    user_annotations = list()
+                    # handle author_annotation_fields
+                    author_annotation_fields = dict()
                     obj_fields = vars(annotation)
                     for column in columns:
                         if column not in obj_fields and column not in ["row_number", "message"]:
-                            user_annotations.append(UserAnnotation(column, str(row[columns.index(column)])))
-                    annotation.user_annotations = user_annotations
+                            author_annotation_fields[column] = str(row[columns.index(column)])
+                    annotation.author_annotation_fields = author_annotation_fields
 
                     annotations.append(annotation)
                 cta.annotations = annotations
