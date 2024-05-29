@@ -37,7 +37,7 @@ def export_cas_data(sqlite_db: str, output_file: str, dataset_cache_folder: str 
         elif table_name == "annotation_transfer":
             parse_annotation_transfer_data(cta, sqlite_db, table_name)
         # elif table_name == "review":
-        # don't export reviews to the CAS json for now
+        #     # don't export reviews to the CAS json for now
         #     parse_review_data(cta, sqlite_db, table_name)
 
     project_config = read_project_config(Path(output_file).parent.absolute())
