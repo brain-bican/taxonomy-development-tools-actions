@@ -4,6 +4,7 @@ import ast
 import json
 from contextlib import closing
 from pathlib import Path
+from datetime import datetime
 
 from tdta.utils import read_project_config
 from cas.model import (CellTypeAnnotation, Annotation, Labelset, AnnotationTransfer, AutomatedAnnotation, Review)
@@ -35,12 +36,13 @@ def export_cas_data(sqlite_db: str, output_file: str, dataset_cache_folder: str 
             parse_labelset_data(cta, sqlite_db, table_name)
         elif table_name == "annotation_transfer":
             parse_annotation_transfer_data(cta, sqlite_db, table_name)
-        elif table_name == "review":
-            parse_review_data(cta, sqlite_db, table_name)
+        # elif table_name == "review":
+        #     # don't export reviews to the CAS json for now
+        #     parse_review_data(cta, sqlite_db, table_name)
 
     project_config = read_project_config(Path(output_file).parent.absolute())
 
-    if "matrix_file_id" in project_config:
+    if project_config and "matrix_file_id" in project_config:
         matrix_file_id = str(project_config["matrix_file_id"]).strip()
         anndata = resolve_matrix_file(matrix_file_id, dataset_cache_folder)
         labelsets = cta.labelsets.copy()
@@ -163,6 +165,7 @@ def parse_annotation_transfer_data(cta, sqlite_db, table_name):
                             else:
                                 filtered_annotations[0].transferred_annotations = [at]
 
+
 def parse_review_data(cta, sqlite_db, table_name):
     """
     Reads 'Annotation Review' table data into the CAS object
@@ -180,8 +183,10 @@ def parse_review_data(cta, sqlite_db, table_name):
                         filtered_annotations = [a for a in cta.annotations
                                                 if a.cell_set_accession == row[columns.index("target_node_accession")]]
                         if filtered_annotations:
-                            ar = Review("", "", "", "", "")
+                            ar = Review(None, "", "", "")
                             auto_fill_object_from_row(ar, columns, row)
+                            if ar.datestamp and isinstance(ar.datestamp, str):
+                                ar.datestamp = datetime.strptime(ar.datestamp, '%Y-%m-%dT%H:%M:%S.%fZ')
                             if filtered_annotations[0].reviews:
                                 filtered_annotations[0].reviews.append(ar)
                             else:
