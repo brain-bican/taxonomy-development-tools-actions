@@ -22,8 +22,10 @@ class CASExportTests(unittest.TestCase):
 
         self.assertTrue("author_name" in result)
         self.assertEqual("Nelson Johansen", result["author_name"])
-        self.assertFalse("orcid" in result)
-        self.assertFalse("cellannotation_schema_version" in result)
+        self.assertTrue("orcid" in result)
+        self.assertEqual("https://orcid.org/0000-0002-4436-969X", result["orcid"])
+        self.assertTrue("cellannotation_schema_version" in result)
+        self.assertEqual("0.2b0", result["cellannotation_schema_version"])
 
         self.assertTrue("labelsets" in result)
         self.assertEqual(4, len(result["labelsets"]))
@@ -37,8 +39,8 @@ class CASExportTests(unittest.TestCase):
         self.assertEqual(355, len(result["annotations"]))
         # print(result["annotations"][:3])
         test_annotation = [x for x in result["annotations"] if x["cell_label"] == "1_MSN"][0]
-        self.assertEqual("D1-Matrix", test_annotation["parent_cell_set_name"])
         self.assertEqual("AIT115_300", test_annotation["parent_cell_set_accession"])
+        self.assertFalse("parent_cell_set_name" in test_annotation)
         self.assertFalse("marker_gene_evidence" in test_annotation)
         # self.assertEqual(3, len(test_annotation["marker_gene_evidence"]))
         # self.assertTrue("EPYC" in test_annotation["marker_gene_evidence"])
@@ -48,6 +50,16 @@ class CASExportTests(unittest.TestCase):
         self.assertFalse("rationale_dois" in test_annotation)
 
         self.assertTrue("author_annotation_fields" in test_annotation)
-        self.assertEqual(12, len(test_annotation["author_annotation_fields"]))
+        print(test_annotation["author_annotation_fields"])
+        self.assertEqual(11, len(test_annotation["author_annotation_fields"]))
         self.assertEqual('16393', test_annotation["author_annotation_fields"]['Cluster size'])
         self.assertEqual('PuR(0.52) | CaH(0.39)', test_annotation["author_annotation_fields"]['region.info _Frequency_'])
+
+        self.assertFalse("reviews" in test_annotation)
+        # self.assertTrue("reviews" in test_annotation)
+        # self.assertEqual(1, len(test_annotation["reviews"]))
+        # self.assertEqual('hkir-dev', test_annotation["reviews"][0]['reviewer'])
+        # self.assertEqual('Disagree', test_annotation["reviews"][0]['review'])
+        # self.assertEqual('incorrect', test_annotation["reviews"][0]['explanation'])
+        # print(test_annotation["reviews"][0]['datestamp'])
+        # self.assertEqual('wrong', test_annotation["reviews"][0]['datestamp'])
