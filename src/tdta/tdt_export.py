@@ -24,7 +24,7 @@ def export_cas_data(sqlite_db: str, output_file: str, dataset_cache_folder: str 
     :param output_file: output json path
     :param dataset_cache_folder: anndata cache folder path
     """
-    cta = CellTypeAnnotation("", list())
+    cta = CellTypeAnnotation("", list(), "")
 
     cas_tables = get_table_names(sqlite_db)
     for table_name in cas_tables:
