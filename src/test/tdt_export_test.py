@@ -1,11 +1,12 @@
 import unittest
 import os
-import shutil
-from tdta.tdt_export import export_cas_data
+from typing import List, Optional
+from tdta.tdt_export import export_cas_data, is_list
 
 TEST_DATA_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), "./test_data/")
 TEST_OUTPUT = os.path.join(TEST_DATA_FOLDER, "cas_output.json")
 TEST_DB = os.path.join(TEST_DATA_FOLDER, "nanobot.db")
+TEST_DB_SILETTI = os.path.join(TEST_DATA_FOLDER, "nanobot_siletti_nn.db")
 
 
 class CASExportTests(unittest.TestCase):
@@ -63,3 +64,60 @@ class CASExportTests(unittest.TestCase):
         # self.assertEqual('incorrect', test_annotation["reviews"][0]['explanation'])
         # print(test_annotation["reviews"][0]['datestamp'])
         # self.assertEqual('2024-05-29T08:10:11.126Z', test_annotation["reviews"][0]['datestamp'])
+
+    def test_export_siletti_nn(self):
+        cas = export_cas_data(TEST_DB_SILETTI, TEST_OUTPUT, TEST_DATA_FOLDER)
+        self.assertTrue(os.path.exists(TEST_OUTPUT))
+
+        self.assertTrue(cas)
+        result = cas.to_dict()
+
+        self.assertTrue("annotations" in result)
+        test_annotation = [x for x in result["annotations"] if x["cell_label"] == "VendC_15"][0]
+        self.assertEqual("CS202210140_16", test_annotation["cell_set_accession"])
+        self.assertTrue("marker_gene_evidence" in test_annotation)
+        print(test_annotation["marker_gene_evidence"])
+        self.assertEqual(4, len(test_annotation["marker_gene_evidence"]))
+        self.assertTrue("FLT1" in test_annotation["marker_gene_evidence"])
+        self.assertTrue("CLDN5" in test_annotation["marker_gene_evidence"])
+        self.assertTrue("PECAM1" in test_annotation["marker_gene_evidence"])
+        self.assertTrue("MFSD2A" in test_annotation["marker_gene_evidence"])
+
+    def test_list_instance(self):
+        samples = AttributeSamples()
+
+        import inspect
+        members = inspect.getmembers(samples)
+
+        for name, value in members:
+            if not name.startswith('__'):  # Skip built-in attributes
+                print(name, value, type(value))
+
+        self.assertTrue(is_list(samples, "field1"))
+        self.assertTrue(is_list(samples, "field2"))
+        self.assertTrue(is_list(samples, "field3"))
+        self.assertTrue(is_list(samples, "field4"))
+        self.assertTrue(is_list(samples, "field5"))
+        self.assertTrue(is_list(samples, "field6"))
+        self.assertTrue(is_list(samples, "field7"))
+
+        self.assertFalse(is_list(samples, "field8"))
+        self.assertFalse(is_list(samples, "field9"))
+        self.assertFalse(is_list(samples, "field10"))
+
+
+class AttributeSamples:
+
+    field1 = list()
+    field2: Optional[List[str]] = None
+    field3: List[str] = []
+    field4: List[str] = ["a", "b", "c"]
+    field5: Optional[List[str]] = ["a", "b", "c"]
+    field6: Optional[List[int]] = None
+    field7: List = None
+
+    field8: str = None
+    field9: Optional[str] = None
+    field10 = None
+
+
