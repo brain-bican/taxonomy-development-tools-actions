@@ -2,6 +2,8 @@ import os
 import sqlite3
 import ast
 import json
+import typing
+from typing import Union, List
 from contextlib import closing
 from pathlib import Path
 from datetime import datetime
@@ -193,6 +195,7 @@ def parse_review_data(cta, sqlite_db, table_name):
                             else:
                                 filtered_annotations[0].reviews = [ar]
 
+
 def get_table_names(sqlite_db):
     """
     Queries 'table' table to get all CAS related table names
@@ -222,7 +225,7 @@ def auto_fill_object_from_row(obj, columns, row):
         if hasattr(obj, column):
             value = row[columns.index(column)]
             if value:
-                if isinstance(type(getattr(obj, column)), list):
+                if is_list(obj, column):
                     if value.strip().startswith("\"") and value.strip().endswith("\""):
                         value = value.strip()[1:-1].strip()
                     elif value.strip().startswith("'") and value.strip().endswith("'"):
@@ -245,3 +248,24 @@ def auto_fill_object_from_row(obj, columns, row):
                 if msg["column"] in columns:
                     setattr(obj, msg["column"], msg["value"])
 
+
+def is_list(obj, field):
+    """
+    Checks if the field of the object is a list or has list typing.
+    Parameters:
+        obj: object
+        field: field name
+    Returns: True if the field is a list or has list typing, False otherwise
+    """
+    is_list_instance = isinstance(getattr(obj, field), list)
+    type_hint = typing.get_type_hints(obj).get(field)
+    if type_hint:
+        # is List
+        is_list_typing = typing.get_origin(type_hint) is list
+        # is Optional[List] or is Optional[List[str]]
+        is_optional_list_typed = typing.get_origin(type_hint) is Union and any(typing.get_origin(e) is list for e in typing.get_args(type_hint))
+
+        is_list_typing = is_list_typing or is_optional_list_typed
+    else:
+        is_list_typing = False
+    return is_list_instance or is_list_typing
