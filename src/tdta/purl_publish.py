@@ -1,10 +1,10 @@
 import os
 import requests
 import shutil
-import subprocess
-import logging
 
 from typing import Optional
+from tdta.command_line_utils import runcmd
+
 
 GITHUB_TOKEN_ENV = 'GITHUB_AUTH_TOKEN'
 GITHUB_USER_ENV = 'GITHUB_USER'
@@ -210,21 +210,3 @@ def clone_project(purl_folder, user_name):
     # runcmd("cd {dir} && gh repo clone {repo}".format(dir=purl_folder, repo=PURL_REPO))
 
     return os.path.join(purl_folder, PURL_REPO_NAME)
-
-
-def runcmd(cmd):
-    """
-    Runs the given command in the command line.
-    :param cmd: command to run
-    :return: output of the command
-    """
-    logging.info("RUNNING: {}".format(cmd))
-    p = subprocess.Popen([cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, universal_newlines=True)
-    (out, err) = p.communicate()
-    logging.info('OUT: {}'.format(out))
-    if err:
-        logging.error(err)
-    if p.returncode != 0:
-        raise Exception('Failed: {}'.format(cmd))
-    return out
-

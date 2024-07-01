@@ -3,6 +3,7 @@ import pathlib
 from tdta.purl_publish import publish_to_purl
 from tdta.tdt_export import export_cas_data
 from tdta.anndata_export import export_anndata
+from tdta.version_control import git_update_local
 
 
 def main():
@@ -12,6 +13,7 @@ def main():
     create_purl_operation_parser(subparsers)
     create_save_operation_parser(subparsers)
     create_anndata_operation_parser(subparsers)
+    create_merge_operation_parser(subparsers)
 
     args = parser.parse_args()
 
@@ -27,6 +29,8 @@ def main():
         if "cache" in args and args.cache:
             cache_folder_path = args.cache
         export_anndata(args.database, args.json, args.output, cache_folder_path)
+    elif args.action == "merge":
+        git_update_local(str(args.project), str(args.message))
 
 
 def create_purl_operation_parser(subparsers):
@@ -62,6 +66,14 @@ def create_anndata_operation_parser(subparsers):
                                help="Anndata output folder path.")
     parser_anndata.add_argument('-c', '--cache', action='store', type=pathlib.Path,
                                help="Dataset cache folder path.")
+
+
+def create_merge_operation_parser(subparsers):
+    parser_purl = subparsers.add_parser("merge",
+                                        description="The version control merge operation parser",
+                                        help="Pulls remote changes and merges with local.")
+    parser_purl.add_argument('-p', '--project', action='store', type=pathlib.Path, required=True, help="Project folder path.")
+    parser_purl.add_argument('-m', '--message', required=True, help="Commit message.")
 
 
 if __name__ == "__main__":
