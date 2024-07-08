@@ -3,12 +3,15 @@ import sqlite3
 import ast
 import json
 import typing
+import zipfile
+import shutil
 from typing import Union, List
 from contextlib import closing
 from pathlib import Path
 from datetime import datetime
 
 from tdta.utils import read_project_config
+from tdta.command_line_utils import runcmd
 from cas.model import (CellTypeAnnotation, Annotation, Labelset, AnnotationTransfer, AutomatedAnnotation, Review)
 from cas.file_utils import write_json_file
 from cas.matrix_file.resolver import resolve_matrix_file
@@ -17,6 +20,9 @@ from cas.populate_cell_ids import add_cell_ids
 CONFLICT_TBL_EXT = "_conflict"
 
 cas_table_names = ["annotation", "labelset", "metadata", "annotation_transfer", "review"]
+
+GITHUB_SIZE_LIMIT = 50 * 1000 * 1000  # 50 MB
+# GITHUB_SIZE_LIMIT = 2 * 1000
 
 
 def export_cas_data(sqlite_db: str, output_file: str, dataset_cache_folder: str = None):
@@ -62,7 +68,41 @@ def export_cas_data(sqlite_db: str, output_file: str, dataset_cache_folder: str 
         write_json_file(cta, output_file, False)
 
     print("CAS json successfully created at: {}".format(output_file))
+    ensure_file_size_limit(output_file)
     return cta
+
+
+def ensure_file_size_limit(file_path):
+    """
+    Checks if the file size exceeds the GitHub size limit and zips the file if needed.
+    Parameters:
+        file_path: file path to check
+    """
+    if os.path.getsize(file_path) > GITHUB_SIZE_LIMIT:
+        zip_path = zip_file(file_path)
+        folder = os.path.dirname(file_path)
+        is_git_repo = runcmd("cd {dir} && git rev-parse --is-inside-work-tree".format(dir=folder)).strip()
+        if is_git_repo == "true":
+            runcmd("cd {dir} && git reset {file_path}".format(dir=folder, file_path=file_path))
+            runcmd("cd {dir} && git add {zip_path}".format(dir=folder, zip_path=zip_path))
+
+
+def zip_file(file_path):
+    """
+    Zips the file into smaller parts if it exceeds the GitHub size limit.
+    Parameters:
+        file_path: file path to zip
+    Returns: zipped file path
+    """
+    folder = os.path.dirname(file_path)
+    base_name = os.path.basename(file_path)
+    zip_base = os.path.splitext(base_name)[0]
+
+    single_zip_path = os.path.join(folder, f"{zip_base}.zip")
+    with zipfile.ZipFile(single_zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        zipf.write(file_path, base_name)
+    print("File zipped due to GitHub size limits: " + single_zip_path)
+    return single_zip_path
 
 
 def parse_metadata_data(cta, sqlite_db, table_name):
