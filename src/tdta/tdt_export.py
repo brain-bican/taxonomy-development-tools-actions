@@ -180,6 +180,9 @@ def parse_labelset_data(cta, sqlite_db, table_name):
                         automated_annotation = AutomatedAnnotation("", "", "", "")
                         auto_fill_object_from_row(automated_annotation, renamed_columns, row)
                         labelset.automated_annotation = automated_annotation
+                    # cast rank to int
+                    if labelset.rank:
+                        labelset.rank = int(labelset.rank)
                     labelsets.append(labelset)
                 cta.labelsets = labelsets
 
