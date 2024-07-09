@@ -21,7 +21,7 @@ CONFLICT_TBL_EXT = "_conflict"
 
 cas_table_names = ["annotation", "labelset", "metadata", "annotation_transfer", "review"]
 
-GITHUB_SIZE_LIMIT = 50 * 1000 * 1000  # 50 MB
+GITHUB_SIZE_LIMIT = 100 * 1000 * 1000  # 100 MB
 # GITHUB_SIZE_LIMIT = 2 * 1000
 
 
