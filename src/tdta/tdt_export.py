@@ -32,21 +32,7 @@ def export_cas_data(sqlite_db: str, output_file: str, dataset_cache_folder: str 
     :param output_file: output json path
     :param dataset_cache_folder: anndata cache folder path
     """
-    cta = CellTypeAnnotation("", list(), "")
-
-    cas_tables = get_table_names(sqlite_db)
-    for table_name in cas_tables:
-        if table_name == "metadata":
-            parse_metadata_data(cta, sqlite_db, table_name)
-        elif table_name == "annotation":
-            parse_annotation_data(cta, sqlite_db, table_name)
-        elif table_name == "labelset":
-            parse_labelset_data(cta, sqlite_db, table_name)
-        elif table_name == "annotation_transfer":
-            parse_annotation_transfer_data(cta, sqlite_db, table_name)
-        # elif table_name == "review":
-        #     # don't export reviews to the CAS json for now
-        #     parse_review_data(cta, sqlite_db, table_name)
+    cta = db_to_cas(sqlite_db)
 
     project_config = read_project_config(Path(output_file).parent.absolute())
 
@@ -69,6 +55,24 @@ def export_cas_data(sqlite_db: str, output_file: str, dataset_cache_folder: str 
 
     print("CAS json successfully created at: {}".format(output_file))
     ensure_file_size_limit(output_file)
+    return cta
+
+
+def db_to_cas(sqlite_db):
+    cta = CellTypeAnnotation("", list(), "")
+    cas_tables = get_table_names(sqlite_db)
+    for table_name in cas_tables:
+        if table_name == "metadata":
+            parse_metadata_data(cta, sqlite_db, table_name)
+        elif table_name == "annotation":
+            parse_annotation_data(cta, sqlite_db, table_name)
+        elif table_name == "labelset":
+            parse_labelset_data(cta, sqlite_db, table_name)
+        elif table_name == "annotation_transfer":
+            parse_annotation_transfer_data(cta, sqlite_db, table_name)
+        # elif table_name == "review":
+        #     # don't export reviews to the CAS json for now
+        #     parse_review_data(cta, sqlite_db, table_name)
     return cta
 
 

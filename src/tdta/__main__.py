@@ -4,6 +4,7 @@ from tdta.purl_publish import publish_to_purl
 from tdta.tdt_export import export_cas_data
 from tdta.anndata_export import export_anndata
 from tdta.version_control import git_update_local
+from tdta.documentation import generate_documentation
 
 
 def main():
@@ -14,6 +15,7 @@ def main():
     create_save_operation_parser(subparsers)
     create_anndata_operation_parser(subparsers)
     create_merge_operation_parser(subparsers)
+    create_docs_operation_parser(subparsers)
 
     args = parser.parse_args()
 
@@ -31,6 +33,8 @@ def main():
         export_anndata(args.database, args.json, args.output, cache_folder_path)
     elif args.action == "merge":
         git_update_local(str(args.project), str(args.message))
+    elif args.action == "docs":
+        generate_documentation(args.database, args.output)
 
 
 def create_purl_operation_parser(subparsers):
@@ -74,6 +78,16 @@ def create_merge_operation_parser(subparsers):
                                         help="Pulls remote changes and merges with local.")
     parser_purl.add_argument('-p', '--project', action='store', type=pathlib.Path, required=True, help="Project folder path.")
     parser_purl.add_argument('-m', '--message', required=True, help="Commit message.")
+
+
+def create_docs_operation_parser(subparsers):
+    parser_export = subparsers.add_parser("export", add_help=False,
+                                          description="The documentation generation parser",
+                                          help="Generates the taxonomy github pages docs.")
+    parser_export.add_argument('-db', '--database', action='store', type=pathlib.Path, required=True,
+                               help="Database file path.")
+    parser_export.add_argument('-o', '--output', action='store', type=pathlib.Path, required=True,
+                               help="Output file path.")
 
 
 if __name__ == "__main__":
