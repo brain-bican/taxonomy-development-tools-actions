@@ -1,11 +1,17 @@
+---
+title: {{annotation.cell_set_accession}}
+weight: {{annotation.weight}}
+---
 ## {{annotation.cell_label}} ({{annotation.cell_set_accession}})
 {% if 'parents' in annotation %}
 <b>Hierarchy: </b>
 {% for parent in annotation.parents %}
-[{{parent}}]({{metadata.purl_base}}{{parent|replace(":", "_")}}) >
+[{{parent}}](../{{parent|replace(":", "_")}}) >
 {% endfor %}
-[{{annotation.cell_set_accession}}]({{metadata.purl_base}}{{annotation.cell_set_accession|replace(":", "_")}})
+[{{annotation.cell_set_accession}}](../{{annotation.cell_set_accession|replace(":", "_")}})
 {% endif %}
+
+**PURL:** [{{metadata.purl_base}}{{annotation.cell_set_accession|replace(":", "_")}}]({{metadata.purl_base}}{{annotation.cell_set_accession|replace(":", "_")}})
 
 ---
 
@@ -15,7 +21,7 @@
 
 {% if 'parent_cell_set_accession' in annotation %}
 {% set parent_annotation = metadata.annotations|selectattr("cell_set_accession", "==", annotation.parent_cell_set_accession) | list | first  %}
-**Parent Cell Set:** {{parent_annotation.cell_label}} ([{{annotation.parent_cell_set_accession}}]({{metadata.purl_base}}{{annotation.parent_cell_set_accession|replace(":", "_")}}))
+**Parent Cell Set:** {{parent_annotation.cell_label}} ([{{annotation.parent_cell_set_accession}}](../{{annotation.parent_cell_set_accession|replace(":", "_")}}))
 {% else %}
 **Parent Cell Set:** -
 {% endif %}
@@ -43,7 +49,7 @@
 | Rationale DOIs |
 |----------------|
 {% for doi in annotation.rationale_dois %}
-|{{doi}}|
+|[{{doi}}]({{doi}})|
 {% endfor %}
 {% endif %}
 
@@ -69,7 +75,7 @@
 | Transferred cell label | Source taxonomy | Source node accession | Algorithm name | Comment |
 |------------------------|-----------------|-----------------------|----------------|---------|
 {% for at in annotation.transferred_annotations %}
-|{{at.transferred_cell_label}}|{{at.source_taxonomy}}|[{{at.source_node_accession}}]({{at.purl_base}}{{at.source_node_accession|replace(":", "_")}})|{{at.algorithm_name}}|{{at.comment}}|
+|{{at.transferred_cell_label}}|[{{at.source_taxonomy}}]({{at.purl_base}})|[{{at.source_node_accession}}]({{at.purl_base}}{{at.source_node_accession|replace(":", "_")}})|{{at.algorithm_name}}|{{at.comment}}|
 {% endfor %}
 {% endif %}
 

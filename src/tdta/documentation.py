@@ -22,6 +22,10 @@ def generate_documentation(sqlite_db: str, output_folder: str, project_config=No
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
+    cell_sets_folder = os.path.join(output_folder, "cell_sets")
+    if not os.path.exists(cell_sets_folder):
+        os.makedirs(cell_sets_folder)
+
     cas_obj = db_to_cas(sqlite_db)
     cas = cas_obj.to_dict()
     if project_config is None:
@@ -29,16 +33,17 @@ def generate_documentation(sqlite_db: str, output_folder: str, project_config=No
     cas = transform_cas(cas, project_config)
 
     annotation_template = read_jinja_template(ANNOTATIONS_TEMPLATE)
+    cell_sets_folder = os.path.join(output_folder, "cell_sets")
     for annotation in cas["annotations"]:
         rendered_file = annotation_template.render(annotation=annotation, metadata=cas)
         annotation_file_name = annotation["cell_set_accession"].replace(":", "_")
 
-        with open(os.path.join(output_folder,  annotation_file_name + ".md"), "w") as fh:
+        with open(os.path.join(cell_sets_folder,  annotation_file_name + ".md"), "w") as fh:
             fh.write(rendered_file)
 
     taxonomy_template = read_jinja_template(TAXONOMY_TEMPLATE)
     rendered_file = taxonomy_template.render(cas=cas)
-    with open(os.path.join(output_folder, "taxonomy.md"), "w") as fh:
+    with open(os.path.join(output_folder, "index.md"), "w") as fh:
         fh.write(rendered_file)
 
 
@@ -46,8 +51,9 @@ def transform_cas(cas, project_config):
     """
     Adds extra data to cas for visualisation purposes.
     """
-    add_purl(cas, project_config["id"])
+    add_purl(cas, project_config)
     add_parents(cas)
+    add_weigth(cas)
     transform_annotation_transfer(cas)
 
     return cas
@@ -60,20 +66,45 @@ def transform_annotation_transfer(cas):
                 parsed_url = urlparse(transferred_annotation["source_taxonomy"])
                 path_parts = parsed_url.path.split('/')
                 taxonomy_id = path_parts[-2]
-                purl_base = f"{parsed_url.scheme}://{parsed_url.netloc}/taxonomy/{taxonomy_id}#"
+                purl_base = f"{parsed_url.scheme}://{parsed_url.netloc}/taxonomy/{taxonomy_id}/"
                 transferred_annotation["purl_base"] = purl_base
 
 
-def add_purl(cas, project_id):
-    cas["purl_base"] = f"https://purl.brain-bican.org/taxonomy/{project_id}#"
+def add_purl(cas, project_config):
+    project_id = project_config["id"]
+    purl_base = get_project_purl(project_config)
+    cas["purl_base"] = purl_base
     if "cellannotation_url" not in cas:
         cas["cellannotation_url"] = f"https://purl.brain-bican.org/taxonomy/{project_id}/{project_id}.json"
+
+
+def get_project_purl(project_config):
+    if "custom_purl" in project_config:
+        purl_base = project_config["custom_purl"]
+        if not purl_base.endswith("/"):
+            purl_base += "/"
+    else:
+        project_id = project_config["id"]
+        purl_base = f"https://purl.brain-bican.org/taxonomy/{project_id}/"
+    return purl_base
 
 
 def add_parents(cas):
     parents = build_hierarchy(cas["annotations"])
     for annotation in cas["annotations"]:
         annotation["parents"] = parents[annotation["cell_set_accession"]]
+
+
+def add_weigth(cas):
+    """
+    Add weight to annotations to be used for sorting pages.
+    """
+    for annotation in cas["annotations"]:
+        order = annotation["cell_set_accession"].replace(":", "_").split("_")[-1]
+        if order.isdigit():
+            annotation["weight"] = int(order)
+        else:
+            annotation["weight"] = 10 - len(annotation["parents"])
 
 
 def build_hierarchy(annotations):

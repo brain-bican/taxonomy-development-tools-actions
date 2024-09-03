@@ -17,10 +17,9 @@ class GenerateDocsTestCase(unittest.TestCase):
             shutil.rmtree(TEST_OUTPUT)
 
     def test_documentation_generation(self):
-        generate_documentation(TEST_DB, TEST_OUTPUT, project_config={"id": "CS202210140"})
+        generate_documentation(TEST_DB, TEST_OUTPUT, project_config={"id": "CS202210140",
+                                                                     "custom_purl": "https://purl.brain-bican.org/taxonomy/CS202210140/CS202210140_non-neuronal/"})
         self.assertTrue(os.path.exists(TEST_OUTPUT))
-
-        self.assertEqual(True, False)  # add assertion here
 
     def test_hierarchy_breadcrumb(self):
         with open("./test_data/CS202210140.json") as f:
