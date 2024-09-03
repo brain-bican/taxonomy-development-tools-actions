@@ -1,3 +1,6 @@
+---
+weight: -10
+---
 ## {{cas.title}}
 
 {{cas.description}}
@@ -19,6 +22,8 @@
 {% endif %}
 
 ---
+
+**Taxonomy PURL:** [{{cas.purl_base}}]({{cas.purl_base}})
 
 **Cell Annotation Schema Version:** {{cas.cellannotation_schema_version}}
 
