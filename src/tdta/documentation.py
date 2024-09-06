@@ -10,8 +10,8 @@ from tdta.utils import read_project_config
 from tdta.command_line_utils import runcmd
 from tdta.version_control import git_update_local
 
-ANNOTATIONS_TEMPLATE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../resources/annotation_template.md")
-TAXONOMY_TEMPLATE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../resources/taxonomy_template.md")
+ANNOTATIONS_TEMPLATE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "./resources/annotation_template.md")
+TAXONOMY_TEMPLATE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "./resources/taxonomy_template.md")
 
 
 def generate_documentation(sqlite_db: str, output_folder: str, project_config=None, git_push=True):
@@ -180,4 +180,3 @@ def read_jinja_template(template_path):
     with open(template_path, 'r') as file:
         template = Template(file.read(), trim_blocks=True)
     return template
-

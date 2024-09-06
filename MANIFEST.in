@@ -1,1 +1,1 @@
-include resources/*
+include src/tdta/resources/*
