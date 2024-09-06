@@ -1,17 +1,20 @@
 import os
-from pathlib import Path
+import shutil
 
+from pathlib import Path
 from jinja2 import Template
 from urllib.parse import urlparse
 
 from tdta.tdt_export import db_to_cas
 from tdta.utils import read_project_config
+from tdta.command_line_utils import runcmd
+from tdta.version_control import git_update_local
 
 ANNOTATIONS_TEMPLATE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../resources/annotation_template.md")
 TAXONOMY_TEMPLATE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../resources/taxonomy_template.md")
 
 
-def generate_documentation(sqlite_db: str, output_folder: str, project_config=None):
+def generate_documentation(sqlite_db: str, output_folder: str, project_config=None, git_push=True):
     """
     Generate markdown documentation for a CAS database.
     Parameters:
@@ -19,32 +22,71 @@ def generate_documentation(sqlite_db: str, output_folder: str, project_config=No
         output_folder: Path to the output documentation folder.
         project_config: Project configuration.
     """
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-
+    project_folder = Path(output_folder).parent.absolute()
+    index_file = os.path.join(output_folder, "index.md")
     cell_sets_folder = os.path.join(output_folder, "cell_sets")
-    if not os.path.exists(cell_sets_folder):
-        os.makedirs(cell_sets_folder)
+
+    clear_docs_folder(cell_sets_folder, index_file, output_folder)
 
     cas_obj = db_to_cas(sqlite_db)
     cas = cas_obj.to_dict()
     if project_config is None:
-        project_config = read_project_config(Path(output_folder).parent.absolute())
+        project_config = read_project_config(project_folder)
     cas = transform_cas(cas, project_config)
 
+    generate_annotation_docs(cas, cell_sets_folder)
+    generate_taxonomy_doc(cas, index_file, output_folder)
+
+    if git_push:
+        runcmd("cd {dir} && git add --all {docs_folder}".format(dir=project_folder,
+                                                                docs_folder=os.path.relpath(output_folder, project_folder)))
+        git_update_local(project_folder.absolute().as_posix(), "Update project documentation")
+        runcmd("cd {dir} && git push".format(dir=project_folder))
+        print("Taxonomy documentation sent to GitHub.")
+        print("Github action is triggered to publish the documentation on the website. Please check the status of the action.")
+
+
+def generate_taxonomy_doc(cas, index_file, output_folder):
+    """
+    Generate the taxonomy documentation (index.md).
+    Parameters:
+        cas: CAS object
+        index_file: Path to the index file
+        output_folder: Path to the output folder
+    """
+    taxonomy_template = read_jinja_template(TAXONOMY_TEMPLATE)
+    rendered_file = taxonomy_template.render(cas=cas)
+    with open(index_file, "w") as fh:
+        fh.write(rendered_file)
+    print("Taxonomy documentation generated at {out_dir}".format(out_dir=output_folder))
+
+
+def generate_annotation_docs(cas, cell_sets_folder):
+    """
+    Generate markdown documentation for each cell set in the CAS.
+    Parameters:
+        cas: CAS object
+        cell_sets_folder: Path to the cell sets folder
+    """
     annotation_template = read_jinja_template(ANNOTATIONS_TEMPLATE)
-    cell_sets_folder = os.path.join(output_folder, "cell_sets")
     for annotation in cas["annotations"]:
         rendered_file = annotation_template.render(annotation=annotation, metadata=cas)
         annotation_file_name = annotation["cell_set_accession"].replace(":", "_")
-
-        with open(os.path.join(cell_sets_folder,  annotation_file_name + ".md"), "w") as fh:
+        with open(os.path.join(cell_sets_folder, annotation_file_name + ".md"), "w") as fh:
             fh.write(rendered_file)
 
-    taxonomy_template = read_jinja_template(TAXONOMY_TEMPLATE)
-    rendered_file = taxonomy_template.render(cas=cas)
-    with open(os.path.join(output_folder, "index.md"), "w") as fh:
-        fh.write(rendered_file)
+
+def clear_docs_folder(cell_sets_folder, index_file, output_folder):
+    """
+    Deletes the existing docs folder content.
+    """
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    else:
+        shutil.rmtree(cell_sets_folder, ignore_errors=True)
+        if os.path.isfile(index_file):
+            os.remove(index_file)
+    os.makedirs(cell_sets_folder)
 
 
 def transform_cas(cas, project_config):

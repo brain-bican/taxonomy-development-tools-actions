@@ -18,7 +18,7 @@ class GenerateDocsTestCase(unittest.TestCase):
 
     def test_documentation_generation(self):
         generate_documentation(TEST_DB, TEST_OUTPUT, project_config={"id": "CS202210140",
-                                                                     "custom_purl": "https://purl.brain-bican.org/taxonomy/CS202210140/CS202210140_non-neuronal/"})
+                                                                     "custom_purl": "https://purl.brain-bican.org/taxonomy/CS202210140/CS202210140_non-neuronal/"}, git_push=False)
         self.assertTrue(os.path.exists(TEST_OUTPUT))
 
     def test_hierarchy_breadcrumb(self):
