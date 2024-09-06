@@ -81,7 +81,7 @@ def create_merge_operation_parser(subparsers):
 
 
 def create_docs_operation_parser(subparsers):
-    parser_export = subparsers.add_parser("export", add_help=False,
+    parser_export = subparsers.add_parser("docs", add_help=False,
                                           description="The documentation generation parser",
                                           help="Generates the taxonomy github pages docs.")
     parser_export.add_argument('-db', '--database', action='store', type=pathlib.Path, required=True,

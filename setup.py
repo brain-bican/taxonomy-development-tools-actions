@@ -8,7 +8,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="tdta",
-    version="0.1.0.dev21",
+    version="0.1.0.dev22",
     description="The aim of this project is to provide taxonomy development tools custom actions.",
     long_description=README,
     long_description_content_type="text/markdown",
