@@ -185,7 +185,7 @@ def parse_labelset_data(cta, sqlite_db, table_name):
                         auto_fill_object_from_row(automated_annotation, renamed_columns, row)
                         labelset.automated_annotation = automated_annotation
                     # cast rank to int
-                    if labelset.rank:
+                    if labelset.rank and str(labelset.rank).isdigit():
                         labelset.rank = int(labelset.rank)
                     labelsets.append(labelset)
                 cta.labelsets = labelsets
