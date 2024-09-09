@@ -10,6 +10,10 @@ from tdta.utils import read_project_config
 from tdta.command_line_utils import runcmd
 from tdta.version_control import git_update_local
 
+# see Dockerfile
+WORKSPACE = "/tools"
+LARGE_DOCS_LIMIT = 5000
+
 ANNOTATIONS_TEMPLATE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "./resources/annotation_template.md")
 TAXONOMY_TEMPLATE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "./resources/taxonomy_template.md")
 
@@ -36,6 +40,8 @@ def generate_documentation(sqlite_db: str, output_folder: str, project_config=No
 
     generate_annotation_docs(cas, cell_sets_folder)
     generate_taxonomy_doc(cas, index_file, output_folder)
+    if len(cas["annotations"]) >= LARGE_DOCS_LIMIT:
+        switch_to_large_mkdocs(project_folder, project_config)
 
     if git_push:
         runcmd("cd {dir} && git add --all {docs_folder}".format(dir=project_folder,
@@ -180,3 +186,18 @@ def read_jinja_template(template_path):
     with open(template_path, 'r') as file:
         template = Template(file.read(), trim_blocks=True)
     return template
+
+
+def switch_to_large_mkdocs(outdir, project):
+    """
+    Mkdocs material template is failing on large taxonomies, switch to another template for large taxonomies.
+    """
+    nanobot_source = WORKSPACE + "/resources/repo_mkdocs_large.yml"
+    with open(nanobot_source, "r") as f:
+        content = f.read()
+    content = content.replace("$$TAXONOMY_NAME$$", project["title"])
+    content = content.replace("$$PROJECT_GITHUB_ORG$$", project["github_org"])
+    content = content.replace("$$PROJECT_REPO$$", project["repo"])
+    mkdocs_file = "{}/mkdocs.yml".format(outdir)
+    with open(mkdocs_file, "w") as f:
+        f.write(content)
