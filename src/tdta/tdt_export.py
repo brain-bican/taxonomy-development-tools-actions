@@ -28,7 +28,7 @@ GITHUB_SIZE_LIMIT = 100 * 1000 * 1000  # 100 MB
 def export_cas_data(cas_source: str, output_file: str, dataset_cache_folder: str = None):
     """
     Reads all data from TDT tables and generates CAS json.
-    :param cas_source: db file path
+    :param cas_source: Path to a .db file or a folder containing CAS data
     :param output_file: output json path
     :param dataset_cache_folder: anndata cache folder path
     """
@@ -296,7 +296,14 @@ class FileExporter(BaseExporter):
 
     def get_table_names(self, tables_folder: str) -> List[str]:
         cas_folder = Path(tables_folder)
-        return [file.stem for file in cas_folder.iterdir() if file.is_file() and file.suffix == ".tsv"]
+        table_names = [file.stem for file in cas_folder.iterdir() if file.is_file() and file.suffix == ".tsv"]
+
+        required_tables = {"metadata", "annotation", "labelset", "annotation_transfer", "review"}
+        missing_tables = required_tables - set(table_names)
+        if missing_tables:
+            raise ValueError(f"Missing required table(s): {', '.join(missing_tables)}")
+
+        return table_names
 
     def get_table_records(self, cas_source: str, table_name: str) -> Tuple[List[str], List[List]]:
         file_path = Path(cas_source) / (table_name + ".tsv")

@@ -23,11 +23,11 @@ def main():
         publish_to_purl(str(args.input), str(args.taxonomy), str(args.user))
     elif args.action == "export":
         cache_folder_path = None
-        if "cache" in args and args.cache:
+        if hasattr(args, 'cache') and args.cache:
             cache_folder_path = args.cache
-        if "database" in args and args.database:
+        if hasattr(args, 'database') and args.database:
             export_cas_data(args.database, args.output, cache_folder_path)
-        elif "folder" in args and args.folder:
+        elif hasattr(args, 'folder') and args.folder:
             export_cas_data(args.folder, args.output, cache_folder_path)
         else:
             print("Please provide either a database or folder path.")
