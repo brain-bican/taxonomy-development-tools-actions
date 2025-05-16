@@ -25,7 +25,13 @@ def main():
         cache_folder_path = None
         if "cache" in args and args.cache:
             cache_folder_path = args.cache
-        export_cas_data(args.database, args.output, cache_folder_path)
+        if "database" in args and args.database:
+            export_cas_data(args.database, args.output, cache_folder_path)
+        elif "folder" in args and args.folder:
+            export_cas_data(args.folder, args.output, cache_folder_path)
+        else:
+            print("Please provide either a database or folder path.")
+            return
     elif args.action == "anndata":
         cache_folder_path = None
         if "cache" in args and args.cache:
@@ -50,8 +56,10 @@ def create_save_operation_parser(subparsers):
     parser_export = subparsers.add_parser("export", add_help=False,
                                           description="The data exporter parser",
                                           help="Gather data from TDT tables and saves CAS data to the output location.")
-    parser_export.add_argument('-db', '--database', action='store', type=pathlib.Path, required=True,
+    parser_export.add_argument('-db', '--database', action='store', type=pathlib.Path,
                                help="Database file path.")
+    parser_export.add_argument('-f', '--folder', action='store', type=pathlib.Path,
+                               help="CAS tables folder path.")
     parser_export.add_argument('-o', '--output', action='store', type=pathlib.Path, required=True,
                                help="Output file path.")
     parser_export.add_argument('-c', '--cache', action='store', type=pathlib.Path,

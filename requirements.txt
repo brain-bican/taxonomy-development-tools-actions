@@ -1,3 +1,3 @@
 requests
-cas-tools==1.0.8
+cas-tools==1.1.5
 jinja2
