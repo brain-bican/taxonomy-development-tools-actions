@@ -22,7 +22,7 @@ class GenerateDocsTestCase(unittest.TestCase):
         self.assertTrue(os.path.exists(TEST_OUTPUT))
 
     def test_hierarchy_breadcrumb(self):
-        with open("./test_data/CS202210140.json") as f:
+        with open(os.path.join(TEST_DATA_FOLDER, "CS202210140.json")) as f:
             siletti = json.load(f)
 
         hierarchy = build_hierarchy(siletti["annotations"])
