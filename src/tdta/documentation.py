@@ -5,7 +5,7 @@ from pathlib import Path
 from jinja2 import Template
 from urllib.parse import urlparse
 
-from tdta.tdt_export import db_to_cas
+from tdta.tdt_export import DBExporter
 from tdta.utils import read_project_config
 from tdta.command_line_utils import runcmd
 from tdta.version_control import git_update_local
@@ -32,7 +32,7 @@ def generate_documentation(sqlite_db: str, output_folder: str, project_config=No
 
     clear_docs_folder(cell_sets_folder, index_file, output_folder)
 
-    cas_obj = db_to_cas(sqlite_db)
+    cas_obj = DBExporter().export_to_cas(sqlite_db)
     cas = cas_obj.to_dict()
     if project_config is None:
         project_config = read_project_config(project_folder)

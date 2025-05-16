@@ -8,11 +8,11 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="tdta",
-    version="0.1.0.dev25",
+    version="0.1.1",
     description="The aim of this project is to provide taxonomy development tools custom actions.",
     long_description=README,
     long_description_content_type="text/markdown",
-    url="https://github.com/hkir-dev/taxonomy-development-tools-actions",
+    url="https://github.com/brain-bican/taxonomy-development-tools-actions",
     author="",
     license="Apache-2.0 license",
     classifiers=[
