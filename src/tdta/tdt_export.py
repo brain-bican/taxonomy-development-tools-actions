@@ -180,6 +180,8 @@ class BaseExporter(ABC):
                 # cast rank to int
                 if labelset.rank and str(labelset.rank).isdigit():
                     labelset.rank = int(labelset.rank)
+                else:
+                    labelset.rank = None
                 labelsets.append(labelset)
             cta.labelsets = labelsets
 
