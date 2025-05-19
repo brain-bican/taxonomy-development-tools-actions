@@ -251,6 +251,8 @@ class BaseExporter(ABC):
                         elif value.strip().startswith("'") and value.strip().endswith("'"):
                             value = value.strip()[1:-1].strip()
                         values = value.split("|")
+                        if len(values) == 1 and "," in values[0]:  # wrong delimiter used, fix it
+                            values = value.split(",")
                         list_value = []
                         for item in values:
                             if item.strip().startswith("\"") and item.strip().endswith("\""):

@@ -2,6 +2,7 @@ import unittest
 import os
 from typing import List, Optional
 from tdta.tdt_export import export_cas_data, is_list
+from cas.model import Annotation
 
 TEST_DATA_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), "./test_data/")
 TEST_OUTPUT = os.path.join(TEST_DATA_FOLDER, "cas_output.json")
@@ -106,6 +107,11 @@ class CASExportTests(unittest.TestCase):
         self.assertFalse(is_list(samples, "field9"))
         self.assertFalse(is_list(samples, "field10"))
 
+    def test_list_instance_2(self):
+        annotation = Annotation("", "")
+        self.assertTrue(is_list(annotation, "marker_gene_evidence"))
+        self.assertTrue(is_list(annotation, "rationale_dois"))
+
     def test_save_from_folder(self):
         cas = export_cas_data(TEST_WMB_FOLDER, TEST_OUTPUT, TEST_DATA_FOLDER)
         self.assertTrue(os.path.exists(TEST_OUTPUT))
@@ -139,13 +145,24 @@ class CASExportTests(unittest.TestCase):
         # self.assertTrue("GULP1" in test_annotation["marker_gene_evidence"])
         self.assertFalse("transferred_annotations" in test_annotation)
         self.assertFalse("rationale_dois" in test_annotation)
-
         self.assertTrue("author_annotation_fields" in test_annotation)
         self.assertEqual(35, len(test_annotation["author_annotation_fields"]))
         self.assertEqual('Pallium-Glut', test_annotation["author_annotation_fields"]['neighborhood'])
         self.assertEqual('Cux2,Satb2,Nr4a2,Zfhx4,Pou6f2', test_annotation["author_annotation_fields"]['subclass.tf.markers.combo'])
-
         self.assertFalse("reviews" in test_annotation)
+
+        test_annotation = [x for x in result["annotations"] if x["cell_label"] == "25 Pineal Glut"][0]
+        self.assertEqual(None, test_annotation.get("parent_cell_set_accession"))
+        self.assertFalse("parent_cell_set_name" in test_annotation)
+        self.assertTrue("marker_gene_evidence" in test_annotation)
+        self.assertEqual(5, len(test_annotation["marker_gene_evidence"]))
+        self.assertTrue("Crx" in test_annotation["marker_gene_evidence"])
+        self.assertTrue("Gngt1" in test_annotation["marker_gene_evidence"])
+        self.assertTrue("Tph1" in test_annotation["marker_gene_evidence"])
+        self.assertTrue("Asmt" in test_annotation["marker_gene_evidence"])
+        self.assertTrue("Gngt2" in test_annotation["marker_gene_evidence"])
+        self.assertTrue("rationale_dois" in test_annotation)
+        self.assertEqual(2, len(test_annotation["rationale_dois"]))
 
 
 class AttributeSamples:
