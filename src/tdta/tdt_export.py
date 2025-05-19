@@ -42,7 +42,7 @@ def export_cas_data(cas_source: str, output_file: str, dataset_cache_folder: str
 
     project_config = read_project_config(Path(output_file).parent.absolute())
 
-    if project_config and "matrix_file_id" in project_config:
+    if dataset_cache_folder and project_config and "matrix_file_id" in project_config:
         matrix_file_id = str(project_config["matrix_file_id"]).strip()
         anndata = resolve_matrix_file(matrix_file_id, dataset_cache_folder)
         labelsets = cta.labelsets.copy()
