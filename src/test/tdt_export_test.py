@@ -125,7 +125,7 @@ class CASExportTests(unittest.TestCase):
         self.assertEqual(2, test_labelset["rank"])
         self.assertEqual(1, len([x for x in result["labelsets"] if x["name"] == "neurotransmitter"]))
         test_labelset = [x for x in result["labelsets"] if x["name"] == "neurotransmitter"][0]
-        self.assertEqual("None", test_labelset["rank"])
+        self.assertTrue("rank" not in test_labelset)
 
         self.assertEqual(6905, len(result.get("annotations")))
         # print(result["annotations"][:3])
