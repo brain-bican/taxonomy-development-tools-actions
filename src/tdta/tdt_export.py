@@ -32,9 +32,9 @@ def export_cas_data(cas_source: str, output_file: str, dataset_cache_folder: str
     :param output_file: output json path
     :param dataset_cache_folder: anndata cache folder path
     """
-    if cas_source.endswith(".db"):
+    if str(cas_source).endswith(".db"):
         exporter = DBExporter()
-    elif Path(cas_source).is_dir():
+    elif Path(str(cas_source)).is_dir():
         exporter = FileExporter()
     else:
         raise ValueError("Invalid cas_source. It should be a .db file or a folder path.")
